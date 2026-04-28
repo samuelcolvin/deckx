@@ -40,6 +40,8 @@ export interface ResolvedDeckxConfig {
   stylesPath: string
   /** Absolute path to the user's components/ directory (may not exist). */
   componentsDir: string
+  /** Absolute path to a favicon file (.svg/.png/.ico/.jpg), or undefined. */
+  faviconPath?: string
 }
 
 /** Raw shape of deckx.toml before path resolution. */
@@ -50,8 +52,11 @@ interface RawConfig {
   mdx?: string
   styles?: string
   components?: string
+  favicon?: string
   tabs?: DeckTab[]
 }
+
+const FAVICON_EXTS = ['.svg', '.png', '.ico', '.jpg', '.jpeg'] as const
 
 /**
  * Load deckx.toml from `cwd` (if present) and resolve all paths to absolutes.
@@ -91,6 +96,18 @@ export function loadConfig(cwd: string): ResolvedDeckxConfig {
     theme = raw.theme as DeckTheme
   }
 
+  let faviconPath: string | undefined
+  if (typeof raw.favicon === 'string' && raw.favicon.length > 0) {
+    faviconPath = path.resolve(absCwd, raw.favicon)
+    if (!existsSync(faviconPath)) {
+      throw new Error(`deckx: favicon not found at ${faviconPath}`)
+    }
+    const ext = path.extname(faviconPath).toLowerCase()
+    if (!(FAVICON_EXTS as readonly string[]).includes(ext)) {
+      throw new Error(`deckx: unsupported favicon extension "${ext}". Use one of: ${FAVICON_EXTS.join(', ')}.`)
+    }
+  }
+
   return {
     title: typeof raw.title === 'string' ? raw.title : undefined,
     theme,
@@ -100,5 +117,6 @@ export function loadConfig(cwd: string): ResolvedDeckxConfig {
     mdxPath,
     stylesPath,
     componentsDir,
+    faviconPath,
   }
 }

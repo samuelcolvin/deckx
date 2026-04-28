@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import mdx from '@mdx-js/rollup'
@@ -36,6 +36,7 @@ export function buildViteConfig(cfg: ResolvedDeckxConfig, mode: 'build' | 'dev')
     plugins: [
       stripHtmlCommentsPlugin,
       virtualConfigPlugin(cfg),
+      faviconPlugin(cfg),
       { enforce: 'pre', ...mdx({ remarkPlugins: [remarkGfm] }) },
       react({ include: /\.(jsx|tsx|mdx)$/ }),
       // Inline all assets into a single HTML file in build mode.
@@ -79,6 +80,35 @@ function virtualConfigPlugin(cfg: ResolvedDeckxConfig): Plugin {
     load(id) {
       if (id !== resolvedId) return null
       return `export const config = ${payload}\n`
+    },
+  }
+}
+
+/** Maps favicon file extensions to their MIME types. */
+const FAVICON_MIME: Record<string, string> = {
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+}
+
+/**
+ * Plugin: inject a `<link rel="icon">` into index.html, sourced from
+ * `cfg.faviconPath`. The file is base64-encoded into a data URI so the deck
+ * stays self-contained for offline / PDF export.
+ */
+function faviconPlugin(cfg: ResolvedDeckxConfig): Plugin {
+  return {
+    name: 'deckx-favicon',
+    transformIndexHtml(html) {
+      if (!cfg.faviconPath) return html
+      const ext = path.extname(cfg.faviconPath).toLowerCase()
+      const mime = FAVICON_MIME[ext]
+      if (!mime) return html // config.ts already validated; defensive guard.
+      const dataUri = `data:${mime};base64,${readFileSync(cfg.faviconPath).toString('base64')}`
+      const tag = `<link rel="icon" type="${mime}" href="${dataUri}" />`
+      return html.replace('</head>', `    ${tag}\n  </head>`)
     },
   }
 }

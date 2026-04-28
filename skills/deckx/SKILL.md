@@ -10,10 +10,11 @@ description: Create a deck with deckx. Use when the user mentions "deckx", "deck
 ## Installation
 
 ```bash
+bun init -y  # if you don't already have a package.json initialized
 bun add @samuelcolvin/deckx
 ```
 
-The npm package is `@samuelcolvin/deckx`; the installed CLI binary is `deckx`. `npm i` / `pnpm add` work the same way. Inside `deck.mdx` you always import from `"deckx"` (a Vite alias, not the npm name) - that doesn't change.
+The npm package is `@samuelcolvin/deckx`; the installed CLI binary is `deckx`. `npm i` / `pnpm add` work the same way. Inside `deck.mdx` you always import from `"deckx"` (a Vite alias, not the npm name).
 
 ## Project layout
 
@@ -47,6 +48,10 @@ theme = "light"
 
 # Small footer rendered bottom-right of every slide.
 footer = "Confidential - do not share"
+
+# Path to a favicon for the browser tab. .svg / .png / .ico / .jpg.
+# Inlined as a data URI so the deck stays self-contained.
+favicon = "assets/favicon.svg"
 
 # Path overrides (defaults shown).
 mdx = "deck.mdx"
