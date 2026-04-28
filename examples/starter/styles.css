@@ -1,0 +1,19 @@
+/* Override the CSS variable defaults defined by deckx-base-styles. */
+:root {
+  --bg-deck: #061314;
+  --bg-slide: #092224;
+  --bg-light: #f0e0fd;
+  --surface: #2a3536;
+
+  --color-heading: #fbffea;
+  --color-text: rgba(251, 255, 234, 0.85);
+  --color-muted: #8f888e;
+
+  --color-heading-light: #1d0214;
+  --color-text-light: #36182d;
+
+  --accent: #4a9eff;
+  --accent-secondary: #ff6b6b;
+  --accent-tertiary: #b388ff;
+  --accent-aqua: #4ad7c5;
+}

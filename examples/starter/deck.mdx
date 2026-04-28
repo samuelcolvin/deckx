@@ -1,0 +1,55 @@
+import { Slide } from "deckx";
+import Hello from "./components/Hello.tsx";
+
+<Slide theme="title">
+
+### Deckx Starter
+
+# A minimal deckx deck
+
+## Built with `deckx`
+
+</Slide>
+
+<Slide tab="intro">
+
+# Hello, slide
+
+- Slides are MDX
+- Components are TSX
+- Theme is plain CSS variables
+
+<Hello name="deckx" />
+
+</Slide>
+
+<Slide tab="details" space="tight">
+
+# Details
+
+| Feature       | Where it lives        |
+| ------------- | --------------------- |
+| Slide content | `deck.mdx`            |
+| Theme tokens  | `styles.css`          |
+| Components    | `components/*.tsx`    |
+| Config        | `deckx.toml`          |
+
+</Slide>
+
+<Slide theme="light">
+
+# A light slide
+
+Lorem ipsum dolor sit amet.
+
+- One
+- Two
+- Three
+
+</Slide>
+
+<Slide theme="statement">
+
+# One bold statement.
+
+</Slide>

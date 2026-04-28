@@ -1,0 +1,917 @@
+/*
+ * deckx base stylesheet.
+ *
+ * All structural rules - slide dimensions, @page, counters, topbar, transitions,
+ * theme variants - live here. Brand colors and fonts are exposed as CSS variables
+ * with conservative defaults so a deck without a styles.css still renders.
+ *
+ * Override any of the variables defined in :root below from your own styles.css.
+ */
+
+:root {
+  /* Core palette - override in your deck's styles.css. */
+  --bg-deck: #0d0d0d;
+  --bg-slide: #1a1a1a;
+  --bg-light: #f4f4f4;
+  --surface: #2a2a2a;
+  --color-text: rgba(255, 255, 255, 0.85);
+  --color-heading: #ffffff;
+  --color-muted: #8f888e;
+  --color-text-light: #2a2230;
+  --color-heading-light: #1a1018;
+  --accent: #4a9eff;
+  --accent-secondary: #ff6b6b;
+  --accent-tertiary: #b388ff;
+  --accent-aqua: #4ad7c5;
+
+  /* Typography. */
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-body);
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+  --font-terminal: var(--font-body);
+
+  /* Slide geometry: 16:9 landscape, 11in wide -> 6.1875in tall. */
+  --slide-width: 279.4mm;
+  --slide-height: 157.2mm;
+  --slide-padding: 36px 46px;
+  --title-font-size: 1.05rem;
+
+  /* Subtle topbar accent, derived from --accent-aqua. */
+  --topbar-divider: rgba(255, 255, 255, 0.08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--bg-deck);
+  line-height: 1.6;
+}
+
+/* ========================================
+   PRESENTATION MODE (screen only)
+   ======================================== */
+
+.deck-presenter {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deck);
+  position: relative;
+}
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  counter-reset: slide-counter;
+  /* Scale the slide stream to fit the viewport. */
+  transform: scale(var(--slide-scale, 1));
+  transform-origin: center center;
+  /* Clip exiting slides during directional transitions. */
+  overflow: hidden;
+}
+
+/*
+ * Hide non-active slides via visibility (not display:none) so CSS counters
+ * keep incrementing and slide numbers remain correct.
+ */
+.deck-presenter .slide {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.deck-presenter .slide.slide--active {
+  position: relative;
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+}
+
+/* Directional slide transition animations (active when TRANSITION = 'slide'). */
+.deck-presenter .slide.slide--enter-fwd {
+  animation: slide-in-right 0.35s ease both;
+}
+.deck-presenter .slide.slide--enter-back {
+  animation: slide-in-left 0.35s ease both;
+}
+.deck-presenter .slide.slide--exit-fwd,
+.deck-presenter .slide.slide--exit-back {
+  position: absolute;
+  visibility: visible;
+  pointer-events: none;
+}
+.deck-presenter .slide.slide--exit-fwd {
+  animation: slide-out-left 0.35s ease both;
+}
+.deck-presenter .slide.slide--exit-back {
+  animation: slide-out-right 0.35s ease both;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* ========================================
+   TOPBAR NAV - slide counter + prev/next arrows
+   ======================================== */
+.topbar-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 3;
+}
+
+.topbar-nav-counter {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 48px;
+  color: var(--color-muted);
+  letter-spacing: 0.02em;
+}
+
+.topbar-nav-btn {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  background: none;
+  color: var(--color-muted);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.topbar-nav-btn:hover:not(:disabled) {
+  color: var(--color-heading);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.topbar-nav-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* ========================================
+   BASE SLIDE
+   ======================================== */
+.slide {
+  width: var(--slide-width);
+  height: var(--slide-height);
+  padding: 0;
+  background: var(--bg-slide);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  counter-increment: slide-counter;
+}
+
+.slide > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========================================
+   TOP BAR - macOS-style window chrome
+   ======================================== */
+.slide-topbar {
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--topbar-divider);
+  font-family: var(--font-body);
+  z-index: 3;
+}
+
+.topbar-dots {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  cursor: pointer;
+}
+
+.topbar-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.topbar-dot--red {
+  background: #ff5f56;
+}
+.topbar-dot--yellow {
+  background: #ffbd2e;
+}
+.topbar-dot--green {
+  background: #27c93f;
+}
+
+.topbar-title {
+  margin-left: 14px;
+  font-family: var(--font-body);
+  font-size: var(--title-font-size);
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-muted) 80%, transparent);
+  letter-spacing: 0.03em;
+}
+
+/* ========================================
+   TOPBAR TABS - phase navigation bar
+   ======================================== */
+.topbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 14px;
+}
+
+.topbar-tab-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.topbar-tab-sep {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--accent-aqua) 50%, transparent);
+  margin: 0 18px;
+}
+
+.topbar-tab {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--accent-aqua) 50%, transparent);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+  text-decoration: none !important;
+  cursor: pointer;
+}
+
+/* Override .slide a styles so topbar dots don't get link styling. */
+.slide a.topbar-dots,
+.slide a.topbar-dots:link,
+.slide a.topbar-dots:visited,
+.slide a.topbar-dots:hover,
+.slide a.topbar-dots:active {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  color: inherit;
+}
+
+/* Override .slide a styles so tab links retain their muted appearance. */
+.slide a.topbar-tab,
+.slide a.topbar-tab:link,
+.slide a.topbar-tab:visited,
+.slide a.topbar-tab:hover,
+.slide a.topbar-tab:focus,
+.slide a.topbar-tab:active {
+  color: color-mix(in srgb, var(--accent-aqua) 50%, transparent);
+  text-decoration: none !important;
+  border-bottom: none !important;
+  outline: none;
+}
+
+.slide a.topbar-tab.topbar-tab--active,
+.slide a.topbar-tab.topbar-tab--active:link,
+.slide a.topbar-tab.topbar-tab--active:visited,
+.slide a.topbar-tab.topbar-tab--active:hover {
+  color: var(--accent-aqua);
+}
+
+.topbar-tab--active {
+  color: var(--accent-aqua);
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* ========================================
+   SLIDE BODY
+   ======================================== */
+.slide-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: var(--slide-padding);
+}
+
+.slide-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.slide-body,
+.slide-body p,
+.slide-body li,
+.slide-body td,
+.slide-body th,
+.slide-body blockquote {
+  font-family: var(--font-terminal);
+}
+
+.slide-body h1,
+.slide-body h2,
+.slide-body h3,
+.slide-body h4 {
+  font-family: var(--font-terminal);
+}
+
+/* Heading prefixes (#, ##, ###, ####) rendered in muted color. */
+.slide-body h1::before {
+  content: '# ';
+  color: var(--color-muted);
+  font-weight: 400;
+}
+.slide-body h2::before {
+  content: '## ';
+  color: var(--color-muted);
+  font-weight: 400;
+}
+.slide .slide-body h3::before {
+  content: '### ';
+  color: var(--color-muted);
+  font-weight: 400;
+  font-size: inherit;
+}
+.slide-body h4::before {
+  content: '#### ';
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+/* Bold markers (** ... **) wrap <strong> in muted dim. */
+.slide-body strong::before {
+  content: '**';
+  color: var(--color-muted);
+  font-weight: 400;
+}
+.slide-body strong::after {
+  content: '**';
+  color: var(--color-muted);
+  font-weight: 400;
+}
+.slide-body strong {
+  color: var(--color-heading);
+}
+
+/* ========================================
+   TYPOGRAPHY - Dark slides
+   ======================================== */
+.slide h1 {
+  font-family: var(--font-heading);
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin-bottom: 0.4em;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.slide h2 {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--color-heading);
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+}
+
+/* Section label (h3): diamond + uppercase mono in --accent. */
+.slide h3 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 0;
+  margin-bottom: 1.2em;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.slide h3::before {
+  content: '\25C6';
+  font-size: 0.7em;
+  color: var(--accent);
+}
+
+.slide h4 {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  margin-top: 0.8em;
+  margin-bottom: 0.3em;
+}
+
+.slide p {
+  font-size: 1.15rem;
+  margin-bottom: 0.75em;
+  line-height: 1.65;
+}
+
+/* Lists with accent diamond bullets. */
+.slide ul,
+.slide ol {
+  font-size: 1.15rem;
+  margin-bottom: 0.8em;
+  padding-left: 0;
+  list-style: none;
+}
+
+.slide ol {
+  counter-reset: list-counter;
+}
+.slide ol li {
+  counter-increment: list-counter;
+}
+
+.slide ol li::before {
+  content: counter(list-counter);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.85em;
+  margin-right: 0.6em;
+}
+
+.slide ul li {
+  position: relative;
+  padding-left: 1.6em;
+}
+
+.slide ul li::before {
+  content: '\25C6';
+  position: absolute;
+  left: 0.5em;
+  color: var(--accent);
+  font-size: 0.8em;
+  top: 0.05em;
+}
+
+.slide li {
+  margin-bottom: 0.4em;
+  line-height: 1.55;
+}
+
+/* Tight spacing modifier. */
+.slide.space-tight li {
+  margin-bottom: 0.15em;
+  line-height: 1.35;
+}
+.slide.space-tight p {
+  margin-bottom: 0.3em;
+}
+.slide.space-tight ul ul,
+.slide.space-tight ol ul {
+  margin-top: 0.15em;
+  margin-bottom: 0.15em;
+}
+
+/* Wide spacing modifier. */
+.slide.space-wide .slide-content {
+  padding: 40px 60px;
+}
+.slide.space-wide li {
+  margin-bottom: 0.65em;
+  line-height: 1.75;
+}
+.slide.space-wide p {
+  margin-bottom: 1em;
+}
+
+/* Large font modifier. */
+.slide.font-large p,
+.slide.font-large li,
+.slide.font-large td,
+.slide.font-large th,
+.slide.font-large blockquote {
+  font-size: 1.35rem;
+}
+.slide.font-large h1 {
+  font-size: 3.2rem;
+}
+.slide.font-large h2 {
+  font-size: 2.1rem;
+}
+
+.slide ul ul,
+.slide ol ul {
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+}
+
+.slide strong {
+  font-weight: 700;
+  color: var(--color-heading);
+}
+
+.slide em {
+  font-style: italic;
+  color: var(--accent-secondary);
+}
+
+/* Inline code. */
+.slide code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface);
+  color: var(--accent-aqua);
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+}
+
+/* Code blocks. */
+.slide pre {
+  background: var(--bg-deck);
+  color: var(--color-heading);
+  padding: 1.2em 1.4em;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-aqua) 12%, transparent);
+  overflow-x: auto;
+  margin-bottom: 0.8em;
+  font-size: 0.95rem;
+}
+
+.slide pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Links. */
+.slide a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: border-color 0.15s;
+}
+
+.slide a:hover {
+  color: var(--accent-secondary);
+  border-bottom-color: var(--accent-secondary);
+}
+
+/* Images. */
+.slide img {
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* Blockquotes. */
+.slide blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.8em 1.2em;
+  margin: 0.8em 0;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border-radius: 0 6px 6px 0;
+  color: color-mix(in srgb, var(--color-heading) 70%, transparent);
+  font-style: italic;
+}
+
+/* Hide bold markers inside table cells. */
+.slide-body td strong::before,
+.slide-body td strong::after,
+.slide-body th strong::before,
+.slide-body th strong::after {
+  content: none;
+}
+
+/* Tables. */
+.slide table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.8em;
+  font-size: 0.95rem;
+}
+
+.slide th,
+.slide td {
+  border: 1px solid color-mix(in srgb, var(--color-heading) 8%, transparent);
+  padding: 0.55em 0.85em;
+  text-align: left;
+}
+
+.slide th {
+  background: var(--surface);
+  font-weight: 700;
+  color: var(--color-heading);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Horizontal rules as visual dividers. */
+.slide hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-secondary), var(--accent-tertiary));
+  margin: 1em 0;
+  opacity: 0.5;
+}
+
+/* ========================================
+   TITLE SLIDE - bottom-aligned hero
+   ======================================== */
+.slide.title-slide {
+  justify-content: space-between;
+  padding-bottom: 60px;
+}
+
+.slide.title-slide h1 {
+  font-size: 4rem;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.slide.title-slide h2 {
+  font-size: 1.6rem;
+  color: var(--accent);
+  font-weight: 400;
+  margin-top: 0.2em;
+}
+
+.slide.title-slide .slide-body {
+  justify-content: flex-end;
+}
+
+/* ========================================
+   LIGHT SLIDE - light background variant
+   ======================================== */
+.slide.light-slide {
+  background: var(--bg-light);
+}
+
+.slide.light-slide,
+.slide.light-slide p,
+.slide.light-slide li {
+  color: var(--color-text-light);
+}
+
+.slide.light-slide h1,
+.slide.light-slide h2,
+.slide.light-slide h4,
+.slide.light-slide strong {
+  color: var(--color-heading-light);
+}
+
+.slide.light-slide h3 {
+  color: var(--accent);
+}
+
+.slide.light-slide code {
+  background: color-mix(in srgb, var(--color-heading-light) 8%, transparent);
+  color: var(--color-heading-light);
+}
+
+.slide.light-slide blockquote {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  color: color-mix(in srgb, var(--color-text-light) 70%, transparent);
+}
+
+.slide.light-slide th {
+  background: color-mix(in srgb, var(--color-heading-light) 6%, transparent);
+  color: var(--color-heading-light);
+}
+
+.slide.light-slide th,
+.slide.light-slide td {
+  border-color: color-mix(in srgb, var(--color-heading-light) 12%, transparent);
+}
+
+.slide.light-slide em {
+  color: var(--accent-secondary);
+}
+
+.slide.light-slide .topbar-nav-counter,
+.slide.light-slide .topbar-nav-btn {
+  color: color-mix(in srgb, var(--color-heading-light) 35%, transparent);
+}
+
+.slide.light-slide .slide-topbar {
+  border-bottom-color: color-mix(in srgb, var(--color-heading-light) 12%, transparent);
+}
+
+.slide.light-slide .topbar-title {
+  color: color-mix(in srgb, var(--color-heading-light) 45%, transparent);
+}
+
+.slide.light-slide .topbar-tab,
+.slide.light-slide a.topbar-tab,
+.slide.light-slide a.topbar-tab:link,
+.slide.light-slide a.topbar-tab:visited,
+.slide.light-slide a.topbar-tab:hover {
+  color: color-mix(in srgb, var(--color-heading-light) 55%, transparent);
+}
+
+.slide.light-slide .topbar-tab-sep {
+  color: color-mix(in srgb, var(--color-heading-light) 55%, transparent);
+}
+
+.slide.light-slide .topbar-tab--active,
+.slide.light-slide a.topbar-tab.topbar-tab--active,
+.slide.light-slide a.topbar-tab.topbar-tab--active:link,
+.slide.light-slide a.topbar-tab.topbar-tab--active:visited,
+.slide.light-slide a.topbar-tab.topbar-tab--active:hover {
+  color: var(--color-heading-light);
+}
+
+.slide.light-slide .slide-body strong {
+  color: var(--color-heading-light);
+}
+
+.slide.light-slide .slide-body h1::before,
+.slide.light-slide .slide-body h2::before,
+.slide.light-slide .slide-body h3::before,
+.slide.light-slide .slide-body h4::before,
+.slide.light-slide .slide-body strong::before,
+.slide.light-slide .slide-body strong::after {
+  color: color-mix(in srgb, var(--color-heading-light) 30%, transparent);
+}
+
+/* ========================================
+   STATEMENT SLIDE - centered hero text
+   ======================================== */
+.slide.statement-slide {
+  justify-content: center;
+  text-align: center;
+}
+
+.slide.statement-slide .slide-content,
+.slide.statement-slide .slide-body {
+  justify-content: center;
+  align-items: center;
+}
+
+.slide.statement-slide h1 {
+  font-size: 3.4rem;
+  line-height: 1.15;
+}
+
+/* Statement slide hides the heading prefix markers. */
+.slide.statement-slide .slide-body h1::before,
+.slide.statement-slide .slide-body h2::before,
+.slide.statement-slide .slide-body h3::before,
+.slide.statement-slide .slide-body h4::before {
+  content: none;
+}
+
+.slide.statement-slide h2 {
+  font-size: 2.2rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.slide.statement-slide p {
+  font-size: 1.4rem;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ========================================
+   PRINT / PDF
+   ======================================== */
+@page {
+  size: 279.4mm 157.2mm;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: var(--bg-slide);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .deck-presenter {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    display: block;
+    position: static;
+  }
+
+  .deck {
+    padding: 0;
+    gap: 0;
+    transform: none;
+    display: flex;
+    overflow: visible;
+  }
+
+  /* Show every slide in print, one per page. */
+  .deck-presenter .slide {
+    display: flex;
+    position: relative;
+    visibility: visible;
+    pointer-events: auto;
+    animation: none;
+    transform: none;
+    opacity: 1;
+    page-break-after: always;
+    break-after: page;
+    width: 279.4mm;
+    height: 157.2mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .slide:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  /* Hide arrow buttons in print, keep the counter. */
+  .topbar-nav-btn {
+    display: none;
+  }
+  .topbar-nav {
+    padding-right: 20px;
+  }
+}

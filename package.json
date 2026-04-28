@@ -1,0 +1,49 @@
+{
+  "name": "deckx",
+  "version": "0.1.0",
+  "description": "MDX + React slide decks built into a single self-contained HTML file. PDF-ready.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "deckx": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./styles": "./src/styles/deck-base.css",
+    "./templates/index.html": "./templates/index.html",
+    "./templates/main.tsx": "./templates/main.tsx",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src/styles",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev:lib": "tsup --watch",
+    "lint": "biome check .",
+    "format": "biome check --fix .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@mdx-js/rollup": "^3.1.1",
+    "@vitejs/plugin-react": "^5.1.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "remark-gfm": "^4.0.1",
+    "vite": "^7.3.1",
+    "vite-plugin-singlefile": "^2.3.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "tsup": "^8.5.0",
+    "typescript": "~5.9.3"
+  }
+}

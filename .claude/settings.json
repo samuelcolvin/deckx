@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(bun:*)",
+      "Bash(ls:*)",
+      "Bash(make:*)",
+      "Bash(pdftoppm:*)",
+      "Bash(magick:*)",
+      "Bash(curl:*)",
+      "Bash(pdfinfo:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(unzip:*)",
+      "Bash(sips:*)",
+      "Bash(fc-list:*)",
+      "Bash(vtracer:*)",
+      "Bash(uv run:*)",
+      "Bash(bunx biome:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)"
+    ]
+  }
+}

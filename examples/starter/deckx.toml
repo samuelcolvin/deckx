@@ -1,0 +1,9 @@
+title = "Deckx Starter"
+
+[[tabs]]
+id = "intro"
+label = "Intro"
+
+[[tabs]]
+id = "details"
+label = "Details"
