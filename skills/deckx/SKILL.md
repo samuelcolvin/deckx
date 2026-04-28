@@ -33,6 +33,8 @@ bunx deckx html         # build to ./dist/index.html
 bunx deckx pdf          # build HTML, then ./dist/deck.pdf via Chrome headless
 ```
 
+`html` and `pdf` accept an optional output-path positional - e.g. `bunx deckx pdf my-deck.pdf` or `bunx deckx html out/slides.html`. Use `--dir <dir>` to point at a build directory other than the current one.
+
 ## `deckx.toml`
 
 All fields are optional - a deck with only `deck.mdx` works.

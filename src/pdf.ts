@@ -30,10 +30,14 @@ function findChrome(): string | null {
  *
  * The exact command is printed before invocation so the user can copy/edit it
  * if Chrome can't be found, the path differs, or the conversion fails.
+ *
+ * @param cwd        Source directory (where deckx.toml + deck.mdx live).
+ * @param outputPath Optional output PDF path (resolved against process.cwd()).
+ *                   Defaults to `<cwd>/dist/deck.pdf`.
  */
-export async function pdf(cwd: string): Promise<void> {
+export async function pdf(cwd: string, outputPath?: string): Promise<void> {
   const htmlPath = await build(cwd)
-  const pdfPath = path.join(path.dirname(htmlPath), 'deck.pdf')
+  const pdfPath = outputPath ? path.resolve(process.cwd(), outputPath) : path.join(path.dirname(htmlPath), 'deck.pdf')
 
   const chrome = findChrome()
   const chromeBin = chrome ?? 'google-chrome'

@@ -3,14 +3,15 @@
  * deckx CLI entry point.
  *
  * Usage:
- *   deckx html [dir]       Build deck.mdx in <dir> to <dir>/dist/index.html
- *   deckx dev [dir]        Start the Vite dev server with HMR
- *   deckx pdf [dir]        Build HTML, then convert to deck.pdf via Chrome headless
+ *   deckx html [output]    Build deck.mdx to <output> (default: ./dist/index.html)
+ *   deckx pdf  [output]    Build HTML, then convert to <output> via Chrome (default: ./dist/deck.pdf)
+ *   deckx dev  [dir]       Start the Vite dev server with HMR
  *   deckx skill            Print the deckx authoring guide (SKILL.md) to stdout
  *   deckx --help, -h       Show help
  *   deckx --version, -v    Show package version
  *
- * `dir` defaults to the current working directory. A subcommand is required.
+ * Build dir defaults to the current working directory. Override with --dir <dir>.
+ * A subcommand is required.
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -24,7 +25,10 @@ type Command = 'html' | 'dev' | 'pdf' | 'skill' | 'help' | 'version'
 
 interface ParsedArgs {
   command: Command | null
+  /** Build directory (deckx.toml + deck.mdx live here). Defaults to '.'. */
   dir: string
+  /** First non-flag positional after the subcommand, if any. Meaning depends on the command. */
+  positional?: string
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -37,23 +41,45 @@ function parseArgs(argv: string[]): ParsedArgs {
     return { command: null, dir: '.' }
   }
   const command = args[0] as Command
+
   let dir = '.'
-  if (args[1] && !args[1].startsWith('-')) dir = args[1]
-  return { command, dir }
+  const positionals: string[] = []
+  for (let i = 1; i < args.length; i++) {
+    const arg = args[i]
+    if (arg === '--dir') {
+      const next = args[++i]
+      if (!next) throw new Error('deckx: --dir requires a directory argument')
+      dir = next
+    } else if (arg.startsWith('--dir=')) {
+      dir = arg.slice('--dir='.length)
+    } else if (arg.startsWith('-')) {
+      throw new Error(`deckx: unknown flag "${arg}"`)
+    } else {
+      positionals.push(arg)
+    }
+  }
+
+  return { command, dir, positional: positionals[0] }
 }
 
 function help(): void {
   console.log(`deckx - build a single-HTML slide deck from deck.mdx
 
 Usage:
-  deckx html [dir]         Build to <dir>/dist/index.html (default: cwd)
-  deckx dev [dir]          Vite dev server with HMR
-  deckx pdf [dir]          Build HTML, then convert to <dir>/dist/deck.pdf via Chrome
+  deckx html [output]      Build to <output> (default: ./dist/index.html)
+  deckx pdf  [output]      Build HTML, then convert to <output> via Chrome (default: ./dist/deck.pdf)
+  deckx dev  [dir]         Vite dev server with HMR (positional: build dir, default: .)
   deckx skill              Print the deckx authoring guide (SKILL.md) to stdout
 
 Options:
+  --dir <dir>              Build dir (where deckx.toml + deck.mdx live). Default: .
   -h, --help               Show this help
   -v, --version            Print package version
+
+Examples:
+  deckx pdf my-deck.pdf            # build the deck in the current directory to my-deck.pdf
+  deckx html out/index.html        # build to a custom HTML path
+  deckx pdf --dir ./decks/foo      # build ./decks/foo to its default ./decks/foo/dist/deck.pdf
 
 Recommended invocation: \`bunx deckx\` (npx deckx also works).
 `)
@@ -75,9 +101,10 @@ async function main(): Promise<void> {
   if (args.command === 'help') return help()
   if (args.command === 'version') return version()
   if (args.command === 'skill') return skill()
-  if (args.command === 'dev') return dev(args.dir)
-  if (args.command === 'pdf') return pdf(args.dir)
-  await build(args.dir)
+  // For `dev` the positional (if any) is the build dir, since there's no output file.
+  if (args.command === 'dev') return dev(args.positional ?? args.dir)
+  if (args.command === 'pdf') return pdf(args.dir, args.positional)
+  await build(args.dir, args.positional)
 }
 
 main().catch((err) => {

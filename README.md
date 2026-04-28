@@ -83,14 +83,20 @@ import Hello from "./components/Hello.tsx";
 
 ## CLI
 
-| Command                   | What it does                                                  |
-|---------------------------|---------------------------------------------------------------|
-| `bunx deckx html [dir]`   | Build to `<dir>/dist/index.html` (default: cwd)               |
-| `bunx deckx dev [dir]`    | Vite dev server with HMR                                      |
-| `bunx deckx pdf [dir]`    | Build HTML, then convert to `<dir>/dist/deck.pdf` via Chrome  |
-| `bunx deckx skill`        | Print the authoring guide (`SKILL.md`) to stdout              |
-| `bunx deckx --help`       | CLI help                                                      |
-| `bunx deckx --version`    | Version                                                       |
+- `bunx deckx html [output]` - build to `<output>` (default: `./dist/index.html`).
+- `bunx deckx pdf [output]` - build HTML, then convert to `<output>` via Chrome (default: `./dist/deck.pdf`).
+- `bunx deckx dev [dir]` - Vite dev server with HMR. Positional is the source directory (default: cwd).
+- `bunx deckx skill` - print the authoring guide (`SKILL.md`) to stdout.
+- `bunx deckx --help` - CLI help.
+- `bunx deckx --version` - version.
+
+All commands accept `--dir <dir>` to point at a build directory other than the current one. Examples:
+
+```bash
+bunx deckx pdf my-deck.pdf                 # build current dir to my-deck.pdf
+bunx deckx html out/index.html             # custom HTML output path
+bunx deckx pdf --dir ./decks/foo           # build ./decks/foo to its default ./decks/foo/dist/deck.pdf
+```
 
 A subcommand is required - running `bunx deckx` with no arguments prints help and exits with status 1.
 
