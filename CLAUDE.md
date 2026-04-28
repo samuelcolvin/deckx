@@ -30,6 +30,18 @@ bun run typecheck            # verify tsc is clean
 
 If `format` modifies files, that's fine - those edits are correct. If `typecheck` reports an error, fix it.
 
+## Pre-commit hooks
+
+The repo uses `.pre-commit-config.yaml` (format, typecheck, codespell, basic file hygiene). Use **[`prek`](https://github.com/j178/prek)** - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
+
+```bash
+prek install                 # install the git hooks (one-time)
+prek run --all-files         # run every hook against the whole repo
+prek run typecheck           # run a single hook by id
+```
+
+`prek` is a drop-in replacement; the same `.pre-commit-config.yaml` works unchanged. It's faster and avoids the Python virtualenv setup of upstream `pre-commit`.
+
 To smoke-test against the bundled starter example:
 
 ```bash
