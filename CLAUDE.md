@@ -32,7 +32,7 @@ If `format` modifies files, that's fine - those edits are correct. If `typecheck
 
 ## Pre-commit hooks
 
-The repo uses `.pre-commit-config.yaml` (format, typecheck, codespell, basic file hygiene). Use **[`prek`](https://github.com/j178/prek)** - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
+The repo uses `.pre-commit-config.yaml` (format, typecheck, codespell, basic file hygiene). Use [`prek`](https://github.com/j178/prek) - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
 
 ```bash
 prek install                 # install the git hooks (one-time)

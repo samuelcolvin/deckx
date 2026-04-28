@@ -1,10 +1,7 @@
 title = "Deckx Starter"
 theme = "markdown-dark"
 
-[[tabs]]
-id = "intro"
-label = "Intro"
-
-[[tabs]]
-id = "details"
-label = "Details"
+tabs = [
+  { id = "intro", label = "Intro" },
+  { id = "details", label = "Details" },
+]

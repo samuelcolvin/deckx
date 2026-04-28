@@ -4,6 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "deckx": "file:../.."
+    "@samuelcolvin/deckx": "file:../.."
   }
 }

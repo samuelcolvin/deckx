@@ -79,7 +79,7 @@ export function loadConfig(cwd: string): ResolvedDeckxConfig {
   const tabs = Array.isArray(raw.tabs) ? raw.tabs : []
   for (const t of tabs) {
     if (typeof t.id !== 'string' || typeof t.label !== 'string') {
-      throw new Error(`deckx: every [[tabs]] entry must have string \`id\` and \`label\`. Got ${JSON.stringify(t)}`)
+      throw new Error(`deckx: every \`tabs\` entry must have string \`id\` and \`label\`. Got ${JSON.stringify(t)}`)
     }
   }
 

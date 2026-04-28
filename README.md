@@ -4,20 +4,27 @@ Yet another markdown + React deck builder.
 
 Why?
 
-* My taste 🤷‍♂️
+* My taste
 * Good support for HTML presentation - keyboard control, slide persistence in URL, jump to slide, title
 * Good support for PDF generation - configure `page` css property properly
 
 ## Quick start
 
+Skills for authoring decks with an AI agent are available in [`skills/deckx/SKILL.md`](./skills/deckx/SKILL.md), and can be installed into Claude Code, Codex, Cursor, etc. via [skills.sh](https://skills.sh).
+
+Then bootstrap a deck:
+
 ```bash
 mkdir my-deck && cd my-deck
+bunx skills add samuelcolvin/deckx
+bun init -y
+bun add @samuelcolvin/deckx
 # author deckx.toml, deck.mdx, styles.css, components/
 bunx deckx html         # → dist/index.html
 bunx deckx dev          # live dev server at http://localhost:5173/
 ```
 
-`npx deckx` works too.
+`npx` / `pnpm dlx` work in place of `bunx`. The package is published as [`@samuelcolvin/deckx`](https://www.npmjs.com/package/@samuelcolvin/deckx); the CLI binary is `deckx`, so `bunx deckx ...` works once the package is installed.
 
 ## A minimal project
 
@@ -36,9 +43,9 @@ my-deck/
 title = "My Deck"
 theme = "light"           # light | dark | markdown-light | markdown-dark (default: light)
 
-[[tabs]]
-id = "intro"
-label = "Intro"
+tabs = [
+  { id = "intro", label = "Intro" },
+]
 ```
 
 The four built-in themes split on two axes: light vs dark backgrounds, and whether markdown-source decorations (`#` heading prefixes, `**` strong markers, traffic-light dots, mono slide counter, diamond bullets) render on top. Pick `light` or `dark` for a clean baseline; pick a `markdown-*` variant for the opinionated annotated look.

@@ -1,9 +1,28 @@
 {
-  "name": "deckx",
-  "version": "0.1.0",
-  "description": "Yet another markdown + React deck builder. But PDF generation actually works.",
+  "name": "@samuelcolvin/deckx",
+  "version": "0.0.2",
+  "description": "Yet another markdown + React deck builder, but PDF generation works.",
   "type": "module",
   "license": "MIT",
+  "author": "Samuel Colvin <s@muelcolvin.com>",
+  "homepage": "https://github.com/samuelcolvin/deckx#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samuelcolvin/deckx.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samuelcolvin/deckx/issues"
+  },
+  "keywords": [
+    "deck",
+    "slides",
+    "presentation",
+    "markdown",
+    "mdx",
+    "react",
+    "pdf",
+    "vite"
+  ],
   "bin": {
     "deckx": "./dist/cli.js"
   },
@@ -18,14 +37,16 @@
   "files": [
     "dist",
     "src/styles",
-    "templates"
+    "templates",
+    "skills"
   ],
   "scripts": {
     "build": "tsup",
     "dev:lib": "tsup --watch",
     "lint": "biome check .",
     "format": "biome check --fix .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run typecheck && bun run build"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
