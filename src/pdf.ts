@@ -28,9 +28,6 @@ function findChrome(): string | null {
 /**
  * Build the deck to HTML, then convert to PDF via Chrome headless.
  *
- * The exact command is printed before invocation so the user can copy/edit it
- * if Chrome can't be found, the path differs, or the conversion fails.
- *
  * @param cwd        Source directory (where deckx.toml + deck.mdx live).
  * @param outputPath Optional output PDF path (resolved against process.cwd()).
  *                   Defaults to `<cwd>/dist/deck.pdf`.
@@ -38,6 +35,23 @@ function findChrome(): string | null {
 export async function pdf(cwd: string, outputPath?: string): Promise<void> {
   const htmlPath = await build(cwd)
   const pdfPath = outputPath ? path.resolve(process.cwd(), outputPath) : path.join(path.dirname(htmlPath), 'deck.pdf')
+  await htmlToPdf(htmlPath, pdfPath)
+}
+
+/**
+ * Convert an existing HTML file to PDF via Chrome headless using deckx's
+ * standard slide page size. The exact Chrome command is printed before
+ * invocation so the user can copy/edit it if Chrome can't be found, the path
+ * differs, or the conversion fails.
+ *
+ * Both paths are resolved against process.cwd() if relative.
+ */
+export async function htmlToPdf(htmlInput: string, pdfOutput: string): Promise<void> {
+  const htmlPath = path.resolve(process.cwd(), htmlInput)
+  const pdfPath = path.resolve(process.cwd(), pdfOutput)
+  if (!existsSync(htmlPath)) {
+    throw new Error(`deckx: HTML input not found at ${htmlPath}`)
+  }
 
   const chrome = findChrome()
   const chromeBin = chrome ?? 'google-chrome'

@@ -85,7 +85,8 @@ import Hello from "./components/Hello.tsx";
 
 - `bunx deckx html [output]` - build to `<output>` (default: `./dist/index.html`).
 - `bunx deckx pdf [output]` - build HTML, then convert to `<output>` via Chrome (default: `./dist/deck.pdf`).
-- `bunx deckx dev [dir]` - Vite dev server with HMR. Positional is the source directory (default: cwd).
+- `bunx deckx html-to-pdf <input.html> <output.pdf>` - convert an existing HTML file to PDF via Chrome, no rebuild.
+- `bunx deckx dev [dir]` - Vite dev server with HMR. Positional is the build directory (default: cwd).
 - `bunx deckx skill` - print the authoring guide (`SKILL.md`) to stdout.
 - `bunx deckx --help` - CLI help.
 - `bunx deckx --version` - version.

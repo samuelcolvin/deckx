@@ -1,6 +1,6 @@
 {
   "name": "@samuelcolvin/deckx",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Yet another markdown + React deck builder, but PDF generation works.",
   "type": "module",
   "license": "MIT",
