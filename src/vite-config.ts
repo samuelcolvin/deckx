@@ -70,7 +70,7 @@ export function buildViteConfig(cfg: ResolvedDeckxConfig, mode: 'build' | 'dev')
 function virtualConfigPlugin(cfg: ResolvedDeckxConfig): Plugin {
   const moduleId = 'deckx-user-config'
   const resolvedId = `\0${moduleId}`
-  const payload = JSON.stringify({ title: cfg.title, theme: cfg.theme, tabs: cfg.tabs })
+  const payload = JSON.stringify({ title: cfg.title, theme: cfg.theme, footer: cfg.footer, tabs: cfg.tabs })
   return {
     name: 'deckx-virtual-config',
     resolveId(id) {

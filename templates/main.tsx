@@ -13,7 +13,7 @@ import DeckContent from 'deckx-user-deck'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Deck title={config.title} theme={config.theme} tabs={config.tabs}>
+    <Deck title={config.title} theme={config.theme} footer={config.footer} tabs={config.tabs}>
       <DeckContent />
     </Deck>
   </StrictMode>,

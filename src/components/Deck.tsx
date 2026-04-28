@@ -12,6 +12,8 @@ export interface DeckProps {
   title?: string
   /** Built-in theme. Defaults to 'light'. */
   theme?: DeckTheme
+  /** Optional footer text rendered in the bottom-right of every slide. */
+  footer?: string
   /** Optional tabs for the topbar nav bar in <Slide tab="...">. */
   tabs?: DeckTab[]
 }
@@ -21,7 +23,7 @@ export interface DeckProps {
  * presentation with viewport scaling, keyboard/click/wheel navigation, slide
  * counter rendering, and tab-link routing.
  */
-export default function Deck({ children, title, theme = 'light', tabs = [] }: DeckProps) {
+export default function Deck({ children, title, theme = 'light', footer, tabs = [] }: DeckProps) {
   const deckRef = useRef<HTMLDivElement>(null)
   // Mirror the theme class onto <html> so @media print rules and body bg can scope by theme.
   useLayoutEffect(() => {
@@ -241,7 +243,7 @@ export default function Deck({ children, title, theme = 'light', tabs = [] }: De
   }, [go, current])
 
   return (
-    <DeckProvider value={{ tabs, theme }}>
+    <DeckProvider value={{ tabs, theme, footer }}>
       <div
         ref={deckRef}
         className={`deck-presenter theme-${theme}`}

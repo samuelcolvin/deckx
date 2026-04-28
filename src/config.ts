@@ -28,6 +28,8 @@ export interface ResolvedDeckxConfig {
   title?: string
   /** Built-in theme name. Defaults to 'light'. */
   theme: DeckTheme
+  /** Optional footer text rendered in the bottom-right of every slide. */
+  footer?: string
   /** Tab list used by <Slide tab="..."> in the topbar. */
   tabs: DeckTab[]
   /** Absolute path to the user's working directory. */
@@ -44,6 +46,7 @@ export interface ResolvedDeckxConfig {
 interface RawConfig {
   title?: string
   theme?: string
+  footer?: string
   mdx?: string
   styles?: string
   components?: string
@@ -91,6 +94,7 @@ export function loadConfig(cwd: string): ResolvedDeckxConfig {
   return {
     title: typeof raw.title === 'string' ? raw.title : undefined,
     theme,
+    footer: typeof raw.footer === 'string' ? raw.footer : undefined,
     tabs,
     cwd: absCwd,
     mdxPath,

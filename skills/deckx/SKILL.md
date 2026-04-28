@@ -41,6 +41,10 @@ title = "My Deck - April 2026"   # browser tab title (optional)
 #   markdown-dark   - dark bg, light text, with markdown decoration
 theme = "light"
 
+# Optional footer rendered in the bottom-right corner of every slide
+# (e.g. confidentiality marker, version tag).
+footer = "Confidential - do not share without consent"
+
 # All paths default to the values shown; only set if you want different ones.
 mdx = "deck.mdx"
 styles = "styles.css"
@@ -81,7 +85,7 @@ A standard MDX file. Import `Slide` from `deckx`, plus any custom components fro
 import { Slide } from "deckx";
 import Hello from "./components/Hello.tsx";
 
-<Slide theme="title">
+<Slide theme="title" title="Investor Deck / April 2026">
 
 ### Section Label
 
@@ -125,7 +129,7 @@ Body text goes here.
 |------------|-----------------------------------------|------------------------------------------------------|
 | `theme`    | `'dark'` (default), `'light'`, `'statement'`, `'title'` | Visual variant. `light` uses `--bg-light`. `title` bottom-aligns the hero. `statement` centers content. |
 | `tab`      | matching `id` from `deckx.toml` tabs    | Highlights that tab in the topbar nav bar.           |
-| `title`    | string                                  | Plain title in the topbar (when no `tab` is set).    |
+| `title`    | string                                  | Plain text shown in the topbar where tabs would otherwise go. Useful on a cover/title slide with no `tab` prop (e.g. `<Slide theme="title" title="Investor Deck / April 2026">`). Ignored when `tab` is set. |
 | `space`    | `'tight'` or `'wide'`                   | Vertical spacing density.                            |
 | `fontSize` | `'large'`                               | Bumps up body text size.                             |
 | `id`       | string                                  | HTML id for deep-linking.                            |

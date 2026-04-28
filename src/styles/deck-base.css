@@ -803,6 +803,27 @@ body {
 }
 
 /* ========================================
+   SLIDE FOOTER - shown on every slide when `footer` is set in deckx.toml
+   ======================================== */
+.slide-footer {
+  position: absolute;
+  bottom: 12px;
+  right: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--topbar-muted);
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* On per-slide light variant, deepen the muted footer so it stays legible. */
+.slide.light-slide .slide-footer {
+  color: color-mix(in srgb, var(--color-heading-light) 80%, transparent);
+}
+
+/* ========================================
    TITLE SLIDE - bottom-aligned hero
    ======================================== */
 .slide.title-slide {

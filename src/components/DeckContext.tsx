@@ -15,6 +15,8 @@ export interface DeckContextValue {
   tabs: DeckTab[]
   /** Active deck theme. Slides may use this to render theme-conditional markup. */
   theme: DeckTheme
+  /** Optional footer text shown on every slide. */
+  footer?: string
 }
 
 const DeckContext = createContext<DeckContextValue>({ tabs: [], theme: 'light' })

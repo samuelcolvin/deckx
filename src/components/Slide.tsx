@@ -29,7 +29,7 @@ export interface SlideProps {
 const themeClass: Record<string, string> = { light: 'light-slide', statement: 'statement-slide', title: 'title-slide' }
 
 export default function Slide({ children, theme, id, title, tab, space, fontSize }: SlideProps) {
-  const { tabs } = useDeckContext()
+  const { tabs, footer } = useDeckContext()
   const cls = [theme && themeClass[theme], space && `space-${space}`, fontSize && `font-${fontSize}`]
     .filter(Boolean)
     .join(' ')
@@ -57,6 +57,7 @@ export default function Slide({ children, theme, id, title, tab, space, fontSize
       <div className="slide-content">
         <div className="slide-body">{children}</div>
       </div>
+      {footer && <div className="slide-footer">{footer}</div>}
     </section>
   )
 }
