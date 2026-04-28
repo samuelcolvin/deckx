@@ -1,6 +1,6 @@
 {
   "name": "@samuelcolvin/deckx",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Yet another markdown + React deck builder, but PDF generation works.",
   "type": "module",
   "license": "MIT",
@@ -51,10 +51,12 @@
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@mdx-js/rollup": "^3.1.1",
+    "@shikijs/rehype": "^4.0.2",
     "@vitejs/plugin-react": "^5.1.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "remark-gfm": "^4.0.1",
+    "shiki": "^4.0.2",
     "vite": "^7.3.1",
     "vite-plugin-singlefile": "^2.3.0"
   },

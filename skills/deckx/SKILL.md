@@ -134,6 +134,29 @@ import logo from "./assets/logo.png";
 
 Vite inlines them into the final HTML. The markdown `![alt](path)` syntax does **not** get inlined - always use `<img src={imported} />`.
 
+### Code blocks
+
+Fenced code blocks are syntax-highlighted at build time by [Shiki](https://shiki.style). Tag the fence with a language so tokens get coloured:
+
+````mdx
+```ts
+export function greet(name: string): string {
+  return `hello, ${name}`;
+}
+```
+````
+
+All Shiki bundled languages work without any per-deck configuration. Highlighting happens during the build, so the output HTML carries only inline-styled `<span>`s - no grammar files, no runtime highlighter.
+
+Both a light and a dark theme are emitted into every code block. deckx switches between them automatically based on the slide's effective theme: dark deck themes (`dark`, `markdown-dark`) use the dark code theme, and `<Slide theme="light">` always shows the light code theme even inside a dark deck. Pick the two themes in `deckx.toml`:
+
+```toml
+code_light_theme = "github-light"   # default
+code_dark_theme  = "github-dark"    # default
+```
+
+Browse the available themes at <https://shiki.style/themes>.
+
 ## Custom components
 
 Any `.tsx` file in `components/` (or wherever `deckx.toml` `components` points) can be imported into `deck.mdx` with a relative path:

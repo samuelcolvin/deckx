@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import mdx from '@mdx-js/rollup'
+import rehypeShiki from '@shikijs/rehype'
 import react from '@vitejs/plugin-react'
 import remarkGfm from 'remark-gfm'
 import type { InlineConfig, Plugin } from 'vite'
@@ -37,7 +38,18 @@ export function buildViteConfig(cfg: ResolvedDeckxConfig, mode: 'build' | 'dev')
       stripHtmlCommentsPlugin,
       virtualConfigPlugin(cfg),
       faviconPlugin(cfg),
-      { enforce: 'pre', ...mdx({ remarkPlugins: [remarkGfm] }) },
+      {
+        enforce: 'pre',
+        ...mdx({
+          remarkPlugins: [remarkGfm],
+          rehypePlugins: [
+            // Shiki tokenises fenced code blocks at build time. defaultColor: false
+            // emits both themes as CSS variables (--shiki-light / --shiki-dark) on
+            // each token; deck-base.css picks which one wins per slide theme.
+            [rehypeShiki, { themes: { light: cfg.codeLightTheme, dark: cfg.codeDarkTheme }, defaultColor: false }],
+          ],
+        }),
+      },
       react({ include: /\.(jsx|tsx|mdx)$/ }),
       // Inline all assets into a single HTML file in build mode.
       ...(mode === 'build' ? [viteSingleFile()] : []),

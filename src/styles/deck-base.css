@@ -695,10 +695,10 @@ body {
   color: var(--accent-aqua);
 }
 
-/* Code blocks. */
+/* Code blocks. Background/color are guarded with :not(.shiki) so Shiki-highlighted
+   blocks can supply their own theme palette while keeping deckx's chrome (padding,
+   border, radius, font-size). */
 .slide pre {
-  background: color-mix(in srgb, var(--slide-heading) 6%, transparent);
-  color: var(--slide-heading);
   padding: 1.2em 1.4em;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--slide-heading) 10%, transparent);
@@ -707,7 +707,12 @@ body {
   font-size: 0.95rem;
 }
 
-:is(.theme-markdown-light, .theme-markdown-dark) .slide pre {
+.slide pre:not(.shiki) {
+  background: color-mix(in srgb, var(--slide-heading) 6%, transparent);
+  color: var(--slide-heading);
+}
+
+:is(.theme-markdown-light, .theme-markdown-dark) .slide pre:not(.shiki) {
   background: var(--bg-deck);
   color: var(--color-heading);
   border-color: color-mix(in srgb, var(--accent-aqua) 12%, transparent);
@@ -718,6 +723,45 @@ body {
   padding: 0;
   color: inherit;
   font-size: inherit;
+}
+
+/* The markdown-theme inline-code rule above has higher specificity than
+   `.slide pre code`, so explicitly reset code-in-pre under those themes too -
+   otherwise the surface colour would paint behind every Shiki token. */
+:is(.theme-markdown-light, .theme-markdown-dark) .slide pre code {
+  background: none;
+  color: inherit;
+}
+
+/* Shiki dual-theme bridge.
+   rehype-shiki emits style="--shiki-light:#…; --shiki-dark:#…" on every token,
+   plus --shiki-light-bg / --shiki-dark-bg on the <pre>. These rules pick which
+   variable resolves to a real colour based on the active deck/slide theme. No
+   per-token classes or theme stylesheet are shipped: only the inline style
+   attributes Shiki already wrote. */
+.slide pre.shiki {
+  background-color: var(--shiki-light-bg);
+  color: var(--shiki-light);
+}
+.slide pre.shiki span {
+  color: var(--shiki-light);
+}
+
+:is(.theme-dark, .theme-markdown-dark) .slide pre.shiki {
+  background-color: var(--shiki-dark-bg);
+  color: var(--shiki-dark);
+}
+:is(.theme-dark, .theme-markdown-dark) .slide pre.shiki span {
+  color: var(--shiki-dark);
+}
+
+/* Per-slide light override beats the deck-level dark theme. */
+.slide.light-slide pre.shiki {
+  background-color: var(--shiki-light-bg);
+  color: var(--shiki-light);
+}
+.slide.light-slide pre.shiki span {
+  color: var(--shiki-light);
 }
 
 /* Links. */

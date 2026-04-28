@@ -32,6 +32,10 @@ export interface ResolvedDeckxConfig {
   footer?: string
   /** Tab list used by <Slide tab="..."> in the topbar. */
   tabs: DeckTab[]
+  /** Shiki theme used for code blocks on light slides. Defaults to 'github-light'. */
+  codeLightTheme: string
+  /** Shiki theme used for code blocks on dark slides. Defaults to 'github-dark'. */
+  codeDarkTheme: string
   /** Absolute path to the user's working directory. */
   cwd: string
   /** Absolute path to the user's deck.mdx file. */
@@ -54,6 +58,8 @@ interface RawConfig {
   components?: string
   favicon?: string
   tabs?: DeckTab[]
+  code_light_theme?: string
+  code_dark_theme?: string
 }
 
 const FAVICON_EXTS = ['.svg', '.png', '.ico', '.jpg', '.jpeg'] as const
@@ -108,15 +114,28 @@ export function loadConfig(cwd: string): ResolvedDeckxConfig {
     }
   }
 
+  const codeLightTheme = resolveCodeTheme(raw.code_light_theme, 'code_light_theme', 'github-light')
+  const codeDarkTheme = resolveCodeTheme(raw.code_dark_theme, 'code_dark_theme', 'github-dark')
+
   return {
     title: typeof raw.title === 'string' ? raw.title : undefined,
     theme,
     footer: typeof raw.footer === 'string' ? raw.footer : undefined,
     tabs,
+    codeLightTheme,
+    codeDarkTheme,
     cwd: absCwd,
     mdxPath,
     stylesPath,
     componentsDir,
     faviconPath,
   }
+}
+
+function resolveCodeTheme(value: unknown, key: string, fallback: string): string {
+  if (value === undefined) return fallback
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`deckx: \`${key}\` must be a non-empty string. See https://shiki.style/themes for valid names.`)
+  }
+  return value
 }
