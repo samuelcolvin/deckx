@@ -4,7 +4,7 @@
  * `'deckx'` to <pkg>/dist/index.js.
  */
 declare module 'deckx' {
-  export type { DeckContextValue, DeckProps, DeckTab, SlideProps } from '../src/index.ts'
+  export type { DeckContextValue, DeckProps, DeckTab, DeckTheme, SlideProps } from '../src/index.ts'
   export { Deck, DeckProvider, Slide, useDeckContext } from '../src/index.ts'
 }
 
@@ -19,6 +19,6 @@ declare module 'deckx-user-deck' {
 }
 
 declare module 'deckx-user-config' {
-  import type { DeckTab } from '../src/config.ts'
-  export const config: { title?: string; tabs: DeckTab[] }
+  import type { DeckTab, DeckTheme } from '../src/config.ts'
+  export const config: { title?: string; theme: DeckTheme; tabs: DeckTab[] }
 }

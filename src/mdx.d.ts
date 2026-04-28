@@ -17,6 +17,6 @@ declare module 'deckx-user-styles'
 declare module 'deckx-base-styles'
 
 declare module 'deckx-user-config' {
-  import type { DeckTab } from './config.ts'
-  export const config: { title?: string; tabs: DeckTab[] }
+  import type { DeckTab, DeckTheme } from './config.ts'
+  export const config: { title?: string; theme: DeckTheme; tabs: DeckTab[] }
 }

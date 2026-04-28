@@ -1,13 +1,19 @@
 # deckx
 
-Build a slide deck from MDX, React components, and a CSS theme. Outputs a single self-contained HTML file that prints cleanly to PDF.
+Yet another markdown + React deck builder.
+
+Why?
+
+* My taste 🤷‍♂️
+* Good support for HTML presentation - keyboard control, slide persistence in URL, jump to slide, title
+* Good support for PDF generation - configure `page` css property properly
 
 ## Quick start
 
 ```bash
 mkdir my-deck && cd my-deck
 # author deckx.toml, deck.mdx, styles.css, components/
-bunx deckx              # → dist/index.html
+bunx deckx html         # → dist/index.html
 bunx deckx dev          # live dev server at http://localhost:5173/
 ```
 
@@ -28,11 +34,14 @@ my-deck/
 
 ```toml
 title = "My Deck"
+theme = "light"           # light | dark | markdown-light | markdown-dark (default: light)
 
 [[tabs]]
 id = "intro"
 label = "Intro"
 ```
+
+The four built-in themes split on two axes: light vs dark backgrounds, and whether markdown-source decorations (`#` heading prefixes, `**` strong markers, traffic-light dots, mono slide counter, diamond bullets) render on top. Pick `light` or `dark` for a clean baseline; pick a `markdown-*` variant for the opinionated annotated look.
 
 `deck.mdx`:
 
@@ -69,13 +78,14 @@ import Hello from "./components/Hello.tsx";
 
 | Command                   | What it does                                                  |
 |---------------------------|---------------------------------------------------------------|
-| `bunx deckx`              | Build to `./dist/index.html`                                  |
-| `bunx deckx build [dir]`  | Same, with optional dir override                              |
+| `bunx deckx html [dir]`   | Build to `<dir>/dist/index.html` (default: cwd)               |
 | `bunx deckx dev [dir]`    | Vite dev server with HMR                                      |
-| `bunx deckx pdf [dir]`    | Build HTML, then convert to `./dist/deck.pdf` via Chrome      |
+| `bunx deckx pdf [dir]`    | Build HTML, then convert to `<dir>/dist/deck.pdf` via Chrome  |
 | `bunx deckx skill`        | Print the authoring guide (`SKILL.md`) to stdout              |
 | `bunx deckx --help`       | CLI help                                                      |
 | `bunx deckx --version`    | Version                                                       |
+
+A subcommand is required - running `bunx deckx` with no arguments prints help and exits with status 1.
 
 ## Converting to PDF
 
@@ -115,9 +125,5 @@ To smoke-test against the bundled starter example:
 ```bash
 cd examples/starter
 bun install
-bunx deckx              # writes dist/index.html
+bunx deckx html         # writes dist/index.html
 ```
-
-## License
-
-MIT.

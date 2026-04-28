@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { DeckProvider, type DeckTab } from './DeckContext'
+import { DeckProvider, type DeckTab, type DeckTheme } from './DeckContext'
 
 /** Transition style between slides: 'fade' for crossfade, 'slide' for directional slide. */
 const TRANSITION: 'fade' | 'slide' = 'fade'
@@ -10,6 +10,8 @@ export interface DeckProps {
   children: React.ReactNode
   /** Browser tab title (also used as fallback when a slide has no title or h1). */
   title?: string
+  /** Built-in theme. Defaults to 'light'. */
+  theme?: DeckTheme
   /** Optional tabs for the topbar nav bar in <Slide tab="...">. */
   tabs?: DeckTab[]
 }
@@ -19,8 +21,17 @@ export interface DeckProps {
  * presentation with viewport scaling, keyboard/click/wheel navigation, slide
  * counter rendering, and tab-link routing.
  */
-export default function Deck({ children, title, tabs = [] }: DeckProps) {
+export default function Deck({ children, title, theme = 'light', tabs = [] }: DeckProps) {
   const deckRef = useRef<HTMLDivElement>(null)
+  // Mirror the theme class onto <html> so @media print rules and body bg can scope by theme.
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const cls = `theme-${theme}`
+    root.classList.add(cls)
+    return () => {
+      root.classList.remove(cls)
+    }
+  }, [theme])
   const [slideCount, setSlideCount] = useState(0)
   // Read initial slide index from URL hash (#3 -> slide 2, 0-indexed).
   const [current, setCurrent] = useState(() => {
@@ -230,8 +241,12 @@ export default function Deck({ children, title, tabs = [] }: DeckProps) {
   }, [go, current])
 
   return (
-    <DeckProvider value={{ tabs }}>
-      <div ref={deckRef} className="deck-presenter" style={{ '--slide-scale': scale } as React.CSSProperties}>
+    <DeckProvider value={{ tabs, theme }}>
+      <div
+        ref={deckRef}
+        className={`deck-presenter theme-${theme}`}
+        style={{ '--slide-scale': scale } as React.CSSProperties}
+      >
         <div className="deck">{children}</div>
       </div>
     </DeckProvider>

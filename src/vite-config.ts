@@ -13,7 +13,7 @@ import type { ResolvedDeckxConfig } from './config.ts'
  *  - serves the deckx package's templates/index.html as the root entry
  *  - aliases `deckx`, `deckx-base-styles`, `deckx-user-deck`, `deckx-user-styles`
  *    to concrete files
- *  - emits a virtual `deckx-user-config` module exposing { title, tabs }
+ *  - emits a virtual `deckx-user-config` module exposing { title, theme, tabs }
  *  - processes MDX (with GFM) and JSX/TSX, then inlines everything via
  *    vite-plugin-singlefile.
  */
@@ -70,7 +70,7 @@ export function buildViteConfig(cfg: ResolvedDeckxConfig, mode: 'build' | 'dev')
 function virtualConfigPlugin(cfg: ResolvedDeckxConfig): Plugin {
   const moduleId = 'deckx-user-config'
   const resolvedId = `\0${moduleId}`
-  const payload = JSON.stringify({ title: cfg.title, tabs: cfg.tabs })
+  const payload = JSON.stringify({ title: cfg.title, theme: cfg.theme, tabs: cfg.tabs })
   return {
     name: 'deckx-virtual-config',
     resolveId(id) {

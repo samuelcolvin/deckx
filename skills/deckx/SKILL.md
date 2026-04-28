@@ -23,7 +23,7 @@ my-deck/
 Build with:
 
 ```bash
-bunx deckx              # → dist/index.html
+bunx deckx html         # → dist/index.html
 bunx deckx dev          # live dev server at http://localhost:5173/
 ```
 
@@ -33,6 +33,13 @@ bunx deckx dev          # live dev server at http://localhost:5173/
 
 ```toml
 title = "My Deck - April 2026"   # browser tab title (optional)
+
+# Built-in theme. Defaults to "light". One of:
+#   light           - white bg, dark text, no decoration
+#   dark            - dark bg, light text, no decoration
+#   markdown-light  - light bg, dark text, with markdown decoration (# / ** / dots / mono counter / diamond bullets)
+#   markdown-dark   - dark bg, light text, with markdown decoration
+theme = "light"
 
 # All paths default to the values shown; only set if you want different ones.
 mdx = "deck.mdx"
@@ -50,6 +57,21 @@ label = "Details"
 ```
 
 If you omit `[[tabs]]` entirely, slides render with a plain title topbar and the `tab` prop on `<Slide>` is ignored.
+
+### Themes
+
+Pick whichever fits the deck:
+
+| Theme            | Background | Text  | Markdown decoration                                                  |
+|------------------|------------|-------|----------------------------------------------------------------------|
+| `light`          | light      | dark  | off - clean typography, standard list bullets, body-font slide counter |
+| `dark`           | dark       | light | off                                                                  |
+| `markdown-light` | light      | dark  | on - heading `#` / `##` prefixes, `**` strong markers, traffic-light dots, mono slide counter, diamond bullets, mono accent h3 |
+| `markdown-dark`  | dark       | light | on                                                                   |
+
+The "markdown" themes are opinionated: they render markdown source-style decorations on top of normal output. Use them if you want a "code/notes-y" look. Pick `light` or `dark` for a plain visual baseline.
+
+The slide-level `<Slide theme="light">` per-slide variant is independent of the deck theme - it forces a single slide onto the light palette regardless of the deck's overall theme.
 
 ## `deck.mdx`
 
@@ -155,7 +177,7 @@ React 19 is available. Components see the same CSS variables your `styles.css` d
 |---------------------------|-----------------|--------------------------------------------------------------|
 | `--bg-deck`               | `#0d0d0d`       | Background outside the slide (presenter mode only)           |
 | `--bg-slide`              | `#1a1a1a`       | Default slide background                                     |
-| `--bg-light`              | `#f4f4f4`       | Background for `theme="light"` slides                        |
+| `--bg-light`              | `#ffffff`       | Slide bg for `light` / `markdown-light` deck themes (and `<Slide theme="light">` slides) |
 | `--surface`               | `#2a2a2a`       | Inline code background, table headers, etc.                  |
 | `--color-text`            | white @ 85%     | Default body text                                            |
 | `--color-heading`         | `#ffffff`       | h1, h2, h4, strong on dark slides                            |
@@ -213,7 +235,7 @@ If the brand has unique fonts, load them at the top of `styles.css` via `@import
 ## Building
 
 ```bash
-bunx deckx              # build to ./dist/index.html
+bunx deckx html         # build to ./dist/index.html
 bunx deckx dev          # dev server with HMR on http://localhost:5173/
 bunx deckx pdf          # build HTML then convert to ./dist/deck.pdf via Chrome headless
 ```

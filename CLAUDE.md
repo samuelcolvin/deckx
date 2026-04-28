@@ -47,7 +47,7 @@ To smoke-test against the bundled starter example:
 ```bash
 cd examples/starter
 bun install
-bunx deckx                   # writes ./dist/index.html
+bunx deckx html              # writes ./dist/index.html
 bunx deckx dev               # vite dev server with HMR
 ```
 
@@ -55,7 +55,7 @@ bunx deckx dev               # vite dev server with HMR
 
 ## Architecture
 
-- **`src/cli.ts`** - argv parser, dispatches to `build`, `dev`, `pdf`, or `skill`
+- **`src/cli.ts`** - argv parser, dispatches to `html`, `dev`, `pdf`, or `skill` (a subcommand is required)
 - **`src/build.ts`, `src/dev.ts`** - thin Vite programmatic wrappers
 - **`src/pdf.ts`** - runs `build`, then spawns Chrome headless to print to PDF (prints the command first so users can copy/edit it on failure)
 - **`src/skill.ts`** - reads `skills/deckx/SKILL.md` and writes it to stdout

@@ -3,15 +3,14 @@
  * deckx CLI entry point.
  *
  * Usage:
- *   deckx [dir]            Build deck.mdx in <dir> to <dir>/dist/index.html
- *   deckx build [dir]      Same as above
+ *   deckx html [dir]       Build deck.mdx in <dir> to <dir>/dist/index.html
  *   deckx dev [dir]        Start the Vite dev server with HMR
  *   deckx pdf [dir]        Build HTML, then convert to deck.pdf via Chrome headless
  *   deckx skill            Print the deckx authoring guide (SKILL.md) to stdout
  *   deckx --help, -h       Show help
  *   deckx --version, -v    Show package version
  *
- * `dir` defaults to the current working directory.
+ * `dir` defaults to the current working directory. A subcommand is required.
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -21,10 +20,10 @@ import { dev } from './dev.ts'
 import { pdf } from './pdf.ts'
 import { skill } from './skill.ts'
 
-type Command = 'build' | 'dev' | 'pdf' | 'skill' | 'help' | 'version'
+type Command = 'html' | 'dev' | 'pdf' | 'skill' | 'help' | 'version'
 
 interface ParsedArgs {
-  command: Command
+  command: Command | null
   dir: string
 }
 
@@ -33,15 +32,13 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (args.includes('--help') || args.includes('-h')) return { command: 'help', dir: '.' }
   if (args.includes('--version') || args.includes('-v')) return { command: 'version', dir: '.' }
 
-  const subs = ['build', 'dev', 'pdf', 'skill'] as const
-  let command: Command = 'build'
-  let i = 0
-  if ((subs as readonly string[]).includes(args[0])) {
-    command = args[0] as Command
-    i = 1
+  const subs = ['html', 'dev', 'pdf', 'skill'] as const
+  if (args.length === 0 || !(subs as readonly string[]).includes(args[0])) {
+    return { command: null, dir: '.' }
   }
+  const command = args[0] as Command
   let dir = '.'
-  if (args[i] && !args[i].startsWith('-')) dir = args[i]
+  if (args[1] && !args[1].startsWith('-')) dir = args[1]
   return { command, dir }
 }
 
@@ -49,8 +46,7 @@ function help(): void {
   console.log(`deckx - build a single-HTML slide deck from deck.mdx
 
 Usage:
-  deckx [dir]              Build to <dir>/dist/index.html (default: cwd)
-  deckx build [dir]        Same as above
+  deckx html [dir]         Build to <dir>/dist/index.html (default: cwd)
   deckx dev [dir]          Vite dev server with HMR
   deckx pdf [dir]          Build HTML, then convert to <dir>/dist/deck.pdf via Chrome
   deckx skill              Print the deckx authoring guide (SKILL.md) to stdout
@@ -72,6 +68,10 @@ function version(): void {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv)
+  if (args.command === null) {
+    help()
+    process.exit(1)
+  }
   if (args.command === 'help') return help()
   if (args.command === 'version') return version()
   if (args.command === 'skill') return skill()

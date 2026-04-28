@@ -1,4 +1,5 @@
 title = "Deckx Starter"
+theme = "markdown-dark"
 
 [[tabs]]
 id = "intro"

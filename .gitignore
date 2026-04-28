@@ -3,6 +3,6 @@ dist/
 .DS_Store
 *.log
 .claude/settings.local.json
-/tmp/
+tmp/
 /references/
 /examples/**/dist/
