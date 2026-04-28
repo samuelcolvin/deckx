@@ -10,10 +10,10 @@ description: Create a deck with deckx. Use when the user mentions "deckx", "deck
 ## Installation
 
 ```bash
-bun add -d @samuelcolvin/deckx
+bun add @samuelcolvin/deckx
 ```
 
-The npm package is `@samuelcolvin/deckx`; the installed CLI binary is `deckx`. `npm i -D` / `pnpm add -D` work the same way. Inside `deck.mdx` you always import from `"deckx"` (a Vite alias, not the npm name) - that doesn't change.
+The npm package is `@samuelcolvin/deckx`; the installed CLI binary is `deckx`. `npm i` / `pnpm add` work the same way. Inside `deck.mdx` you always import from `"deckx"` (a Vite alias, not the npm name) - that doesn't change.
 
 ## Project layout
 
@@ -186,9 +186,16 @@ Fonts:
 2. Pick a slightly off-white for `--color-heading` (pure white reads sterile under projector light).
 3. Pick a tinted dark for `--bg-slide` (pure black is harsh).
 4. For light slides, pick a tinted light bg (cream, eggshell, lavender - not pure white) plus a near-black text color → `--bg-light` / `--color-heading-light` / `--color-text-light`.
-5. For custom fonts, load at the top of `styles.css` via `@import` or `@font-face`, then point `--font-body` / `--font-mono` at them.
+5. For custom fonts, self-host woff2 files in `assets/` and declare them with `@font-face` in `styles.css`, then point `--font-body` / `--font-mono` at the family. Do **not** use `@import url(...)` from Google Fonts - CSS spec requires @import to come before all other statements, which Vite's CSS bundling routinely violates when concatenating the base stylesheet with yours. `@font-face` can appear anywhere. Use [Google Webfonts Helper](https://gwfh.mranftl.com/fonts) to download woff2 files; Vite inlines them into the deck, keeping it self-contained for offline / PDF export.
 
 ```css
+@font-face {
+  font-family: 'YourFont';
+  src: url('./assets/YourFont-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --bg-slide: #...;       /* tinted dark */
   --bg-light: #...;       /* tinted light */
