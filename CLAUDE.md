@@ -21,6 +21,15 @@ bun run lint                 # biome check
 bun run format               # biome check --fix
 ```
 
+**After every set of changes, before reporting work as done, run:**
+
+```bash
+bun run format               # auto-fix formatting + safe lint issues
+bun run typecheck            # verify tsc is clean
+```
+
+If `format` modifies files, that's fine - those edits are correct. If `typecheck` reports an error, fix it.
+
 To smoke-test against the bundled starter example:
 
 ```bash
@@ -34,8 +43,10 @@ bunx deckx dev               # vite dev server with HMR
 
 ## Architecture
 
-- **`src/cli.ts`** - argv parser, dispatches to `build` or `dev`
+- **`src/cli.ts`** - argv parser, dispatches to `build`, `dev`, `pdf`, or `skill`
 - **`src/build.ts`, `src/dev.ts`** - thin Vite programmatic wrappers
+- **`src/pdf.ts`** - runs `build`, then spawns Chrome headless to print to PDF (prints the command first so users can copy/edit it on failure)
+- **`src/skill.ts`** - reads `skills/deckx/SKILL.md` and writes it to stdout
 - **`src/config.ts`** - loads + validates `deckx.toml` from a user cwd
 - **`src/vite-config.ts`** - constructs the InlineConfig: MDX/React plugins, `vite-plugin-singlefile`, the four user-facing aliases (`deckx`, `deckx-base-styles`, `deckx-user-deck`, `deckx-user-styles`), and a virtual `deckx-user-config` plugin
 - **`src/components/Deck.tsx`** - root presenter component (nav, scaling, counters)

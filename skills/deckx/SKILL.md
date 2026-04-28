@@ -215,34 +215,28 @@ If the brand has unique fonts, load them at the top of `styles.css` via `@import
 ```bash
 bunx deckx              # build to ./dist/index.html
 bunx deckx dev          # dev server with HMR on http://localhost:5173/
+bunx deckx pdf          # build HTML then convert to ./dist/deck.pdf via Chrome headless
 ```
 
-The output is one HTML file with all assets, fonts (where inlinable), CSS, and JS bundled inline. Open it directly in a browser - no server needed.
+The HTML output is one file with all assets, fonts (where inlinable), CSS, and JS bundled inline. Open it directly in a browser - no server needed.
 
 ## Converting to PDF
 
-deckx does not ship a PDF subcommand. Run Chrome headless yourself:
+`bunx deckx pdf` does the right thing on most setups: it builds the HTML, prints the exact Chrome command it's about to run, then runs it. Output lands at `./dist/deck.pdf`.
 
-**macOS:**
+If Chrome / Chromium can't be found automatically, or you need to tweak flags, copy the printed command and run it yourself. The default looks like this on macOS:
+
 ```bash
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   --headless=new --disable-gpu \
   --no-margins --print-to-pdf-no-header \
   --paper-width=11 --paper-height=6.1875 \
-  --print-to-pdf=deck.pdf "file://$PWD/dist/index.html"
+  --print-to-pdf=./dist/deck.pdf "file://$PWD/dist/index.html"
 ```
 
-**Linux:**
-```bash
-google-chrome --headless=new --disable-gpu \
-  --no-margins --print-to-pdf-no-header \
-  --paper-width=11 --paper-height=6.1875 \
-  --print-to-pdf=deck.pdf "file://$PWD/dist/index.html"
-```
+On Linux the binary is `google-chrome`, `google-chrome-stable`, `chromium`, or `chromium-browser` - whichever is on your PATH. deckx searches for these automatically.
 
-(Substitute `chromium` for `google-chrome` if that's what you have.)
-
-The paper size matches the slide dimensions in `deck-base.css` (11in × 6.1875in = 16:9). If you change `--slide-width` or `--slide-height` in your `styles.css`, update the `--paper-*` flags to match.
+The paper size matches the slide dimensions in `deckx`'s base CSS (11in × 6.1875in = 16:9). If you override `--slide-width` or `--slide-height` in your `styles.css`, edit the printed command's `--paper-*` flags accordingly and run it yourself.
 
 ## Inspecting the PDF output
 

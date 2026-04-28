@@ -67,27 +67,35 @@ import Hello from "./components/Hello.tsx";
 
 ## CLI
 
-| Command                   | What it does                                |
-|---------------------------|---------------------------------------------|
-| `bunx deckx`              | Build to `./dist/index.html`                |
-| `bunx deckx build [dir]`  | Same, with optional dir override            |
-| `bunx deckx dev [dir]`    | Vite dev server with HMR                    |
-| `bunx deckx --help`       | CLI help                                    |
-| `bunx deckx --version`    | Version                                     |
+| Command                   | What it does                                                  |
+|---------------------------|---------------------------------------------------------------|
+| `bunx deckx`              | Build to `./dist/index.html`                                  |
+| `bunx deckx build [dir]`  | Same, with optional dir override                              |
+| `bunx deckx dev [dir]`    | Vite dev server with HMR                                      |
+| `bunx deckx pdf [dir]`    | Build HTML, then convert to `./dist/deck.pdf` via Chrome      |
+| `bunx deckx skill`        | Print the authoring guide (`SKILL.md`) to stdout              |
+| `bunx deckx --help`       | CLI help                                                      |
+| `bunx deckx --version`    | Version                                                       |
 
 ## Converting to PDF
 
-deckx does not ship a PDF command. Use Chrome headless directly:
+```bash
+bunx deckx pdf
+```
+
+This builds the HTML, prints the exact Chrome command it's about to run, then runs it. The output lands at `./dist/deck.pdf`.
+
+If Chrome isn't found, or the conversion fails, copy the printed command, fix the Chrome path or flags, and run it yourself. The default command looks like:
 
 ```bash
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   --headless=new --disable-gpu \
   --no-margins --print-to-pdf-no-header \
   --paper-width=11 --paper-height=6.1875 \
-  --print-to-pdf=deck.pdf "file://$PWD/dist/index.html"
+  --print-to-pdf=./dist/deck.pdf "file://$PWD/dist/index.html"
 ```
 
-(Use `google-chrome` or `chromium` on Linux.)
+(Use `google-chrome` or `chromium` on Linux - deckx looks for them automatically.)
 
 ## Authoring guide
 

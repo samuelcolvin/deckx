@@ -8,6 +8,7 @@ export async function build(cwd: string): Promise<string> {
   const cfg = loadConfig(cwd)
   await viteBuild(buildViteConfig(cfg, 'build'))
   const out = path.join(cfg.cwd, 'dist', 'index.html')
-  console.log(`deckx: wrote ${out}`)
+  // Log a path relative to the user's invocation cwd so it's easy to copy/click.
+  console.log(`deckx: wrote ${path.relative(process.cwd(), out) || out}`)
   return out
 }
