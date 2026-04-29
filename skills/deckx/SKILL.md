@@ -77,7 +77,7 @@ Standard MDX. Import `Slide` from `"deckx"`, plus any custom components from `./
 import { Slide } from "deckx";
 import Hello from "./components/Hello.tsx";
 
-<Slide theme="title" title="Investor Deck / April 2026">
+<Slide layout="title" title="Investor Deck / April 2026">
 
 ### Section Label
 
@@ -98,7 +98,7 @@ import Hello from "./components/Hello.tsx";
 
 </Slide>
 
-<Slide theme="statement">
+<Slide layout="statement">
 
 # One big idea.
 
@@ -109,12 +109,32 @@ import Hello from "./components/Hello.tsx";
 
 ### `<Slide>` props
 
-- `theme`: `'dark'` (default) | `'light'` | `'statement'` | `'title'` - per-slide variant. `light` forces `--bg-light` regardless of deck theme. `title` bottom-aligns the hero. `statement` centers content.
-- `tab`: string matching an `id` from `deckx.toml` tabs - highlights that tab in the topbar.
-- `title`: string - topbar text when no `tab` is set. Useful for cover slides. Ignored if `tab` is set.
-- `space`: `'tight'` | `'wide'` - vertical spacing density.
-- `fontSize`: `'large'` - bigger body text.
-- `id`: string - HTML id for deep-linking.
+All props are optional. A bare `<Slide>` renders a regular content slide using the deck theme.
+
+#### `layout` - structural layout (default `'content'`)
+
+Picks how the slide arranges its body. Adds a `.<value>-slide` class to the `.slide` element so you can target each variant from `styles.css`.
+
+- `'content'` (default) - regular slide. Headings, paragraphs, bullets, code, and tables flow top-down inside `.slide-body`. Use for the bulk of your deck.
+- `'title'` - cover / section slide. Bottom-aligns the hero; h1 is 4rem with tight letter-spacing; h2 renders in `--accent`. Pair with a leading `### Section Label` for a mono uppercase eyebrow.
+- `'statement'` - centered one-liner. The body is centered both vertically and horizontally; h1 is 3.4rem; paragraphs cap at 80% width. Use for transitions between sections or "one bold idea" beats.
+
+#### `theme` - color variant (defaults to the deck theme)
+
+Per-slide palette override.
+
+- Omit (or pass `'dark'`) - the slide inherits the deck-level `theme` from `deckx.toml`.
+- `'light'` - forces a single slide onto the light palette (`--bg-light`, `--color-text-light`, `--color-heading-light`) regardless of the deck theme. Useful when one slide needs to break out - e.g. a screenshot of a light-themed UI on an otherwise dark deck. Adds `.light-slide` to the slide.
+
+There is no inverse override: on a light deck, `theme="dark"` has no effect. If you need a single dark slide on a light deck, target it from CSS with a custom `id` or class.
+
+#### Other props
+
+- `tab` - string matching an `id` from the `tabs` array in `deckx.toml`. Replaces the plain topbar title with the tab bar, with this slide's tab highlighted. Clicking any tab in any slide jumps to the first slide whose `tab` matches. If `tabs` is not configured, the prop is silently ignored.
+- `title` - plain text rendered in the topbar when `tab` is not set. Also drives `document.title`, so the browser tab updates as the active slide changes. Ignored when `tab` is set.
+- `space` - `'tight'` reduces bullet/paragraph spacing (use when a slide is close to overflowing); `'wide'` increases padding and line-height (use for slides with very little text where you want generous breathing room).
+- `fontSize` - `'large'` bumps body text from 1.15rem to 1.35rem, and h1/h2 proportionally. Useful for slides that need to read from the back of a room.
+- `id` - sets the HTML `id` on the underlying `<section>`. Useful for targeting one slide from `styles.css` (`.slide#hero { ... }`) without adding a custom class.
 
 ### MDX gotchas
 
@@ -209,6 +229,54 @@ Fonts:
 - `--font-heading` (default inherits body) - headings.
 - `--font-mono` (default system mono) - inline code, code blocks, tabs, counter, h3.
 - `--font-terminal` (default inherits body) - body inside `.slide-body`.
+
+### CSS class hooks
+
+For finer control beyond the variable contract, target these classes from `styles.css`. Most decks won't need them - prefer overriding variables first.
+
+Slide structure:
+
+- `.deck-presenter` - outermost wrapper. Owns the viewport background and the fit-to-window scaling transform.
+- `.deck` - inner slide stream (direct child of `.deck-presenter`).
+- `.slide` - a single slide (`<section>`). Sized 16:9, holds topbar + content + optional footer.
+- `.slide-topbar` - 48px window-chrome bar at the top of every slide.
+- `.slide-content` - padded body wrapper below the topbar (this is what `--slide-padding` applies to).
+- `.slide-body` - inner MDX content container, descendant of `.slide-content`.
+- `.slide-footer` - bottom-right footer text, rendered when `footer` is set in `deckx.toml`.
+
+Slide modifiers (added to `.slide` based on props):
+
+- `.title-slide` - `layout="title"`, bottom-aligned hero.
+- `.statement-slide` - `layout="statement"`, centered hero.
+- `.light-slide` - `theme="light"`, forces the light palette.
+- `.space-tight` / `.space-wide` - vertical spacing density.
+- `.font-large` - bumps body text size.
+
+Topbar - left (traffic lights + title/tabs):
+
+- `.topbar-dots` - the traffic-light anchor (clicking jumps to slide 1). Only visible under `markdown-*` themes.
+- `.topbar-dot` plus `.topbar-dot--red` / `.topbar-dot--yellow` / `.topbar-dot--green` - individual dots.
+- `.topbar-title` - plain title text, shown when `<Slide title="...">` is set without a `tab`.
+
+Topbar - tabs (rendered when `<Slide tab="...">` is set and `tabs` are configured in `deckx.toml`):
+
+- `.topbar-tabs` - the tab bar container.
+- `.topbar-tab-group` - per-tab wrapper containing the link plus its leading separator.
+- `.topbar-tab-sep` - the `→` glyph between tabs.
+- `.topbar-tab` - the tab link.
+- `.topbar-tab--active` - applied to the currently-selected tab.
+
+Topbar - right (prev/next + counter):
+
+- `.topbar-nav` - container holding the prev/next buttons and slide counter.
+- `.topbar-nav-btn` plus `.topbar-nav-prev` / `.topbar-nav-next` - the nav buttons (auto-hidden in print).
+- `.topbar-nav-counter` - the `01/12` slide counter.
+
+Deck-level theme classes (applied to both `<html>` and `.deck-presenter` based on `theme` in `deckx.toml`):
+
+- `.theme-light` / `.theme-dark` / `.theme-markdown-light` / `.theme-markdown-dark`
+
+MDX content inside `.slide-body` renders as plain HTML (`h1`-`h4`, `p`, `ul`, `ol`, `pre`, `code`, `table`, `blockquote`, `a`, `img`, `hr`) - target those tags directly with `.slide <tag>` selectors rather than expecting deckx to add wrapper classes.
 
 ### Mapping a brand palette
 

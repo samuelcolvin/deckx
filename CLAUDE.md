@@ -64,7 +64,7 @@ bunx deckx dev               # vite dev server with HMR
 - **`src/components/Deck.tsx`** - root presenter component (nav, scaling, counters)
 - **`src/components/Slide.tsx`** - slide wrapper with topbar
 - **`src/components/DeckContext.tsx`** - React context for deck-level config (tabs)
-- **`src/styles/deck-base.css`** - layout, typography, `@page`, transitions, theme variants. Relies on CSS variables that user `styles.css` overrides.
+- **`src/styles/base.css`** - layout, typography, `@page`, transitions, theme variants. Relies on CSS variables that user `styles.css` overrides.
 - **`src/index.ts`** - library entry: re-exports `Slide`, `Deck`, types
 - **`templates/index.html`, `templates/main.tsx`** - Vite root, bootstraps a deck from the four aliased modules
 - **`skills/deckx/SKILL.md`** - the user-facing authoring guide
@@ -77,7 +77,7 @@ When the CLI builds a user's deck, Vite is configured with the following aliases
 | Alias                | Resolves to                                        |
 |----------------------|----------------------------------------------------|
 | `deckx`              | `<package>/dist/index.js`                          |
-| `deckx-base-styles`  | `<package>/src/styles/deck-base.css`               |
+| `deckx-base-styles`  | `<package>/src/styles/base.css`                    |
 | `deckx-user-deck`    | user's `deck.mdx`                                  |
 | `deckx-user-styles`  | user's `styles.css`                                |
 | `deckx-user-config`  | virtual ES module exposing `{ title, tabs }` (TOML) |

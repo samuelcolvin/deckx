@@ -24,7 +24,7 @@ export function buildViteConfig(cfg: ResolvedDeckxConfig, mode: 'build' | 'dev')
   const packageRoot = path.resolve(here, '..')
   const templatesDir = path.join(packageRoot, 'templates')
   const distLib = path.join(packageRoot, 'dist', 'index.js')
-  const baseStyles = path.join(packageRoot, 'src', 'styles', 'deck-base.css')
+  const baseStyles = path.join(packageRoot, 'src', 'styles', 'base.css')
 
   if (!existsSync(distLib)) {
     throw new Error(
@@ -45,7 +45,7 @@ export function buildViteConfig(cfg: ResolvedDeckxConfig, mode: 'build' | 'dev')
           rehypePlugins: [
             // Shiki tokenises fenced code blocks at build time. defaultColor: false
             // emits both themes as CSS variables (--shiki-light / --shiki-dark) on
-            // each token; deck-base.css picks which one wins per slide theme.
+            // each token; base.css picks which one wins per slide theme.
             [rehypeShiki, { themes: { light: cfg.codeLightTheme, dark: cfg.codeDarkTheme }, defaultColor: false }],
           ],
         }),

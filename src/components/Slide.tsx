@@ -11,8 +11,13 @@ import { type DeckTab, useDeckContext } from './DeckContext'
  */
 export interface SlideProps {
   children: React.ReactNode
-  /** Visual theme - controls background and text styling. */
-  theme?: 'dark' | 'light' | 'statement' | 'title'
+  /** Color variant - controls background and text palette. Defaults to the deck theme. */
+  theme?: 'dark' | 'light'
+  /**
+   * Structural layout. Defaults to 'content' (regular slide body).
+   * 'title' bottom-aligns the hero. 'statement' centers content.
+   */
+  layout?: 'content' | 'title' | 'statement'
   /** Optional HTML id for deep-linking to a specific slide. */
   id?: string
   /** Title shown in the topbar (when no `tab` prop is set). */
@@ -25,12 +30,19 @@ export interface SlideProps {
   fontSize?: 'large'
 }
 
-/** Maps the friendly `theme` prop value to its corresponding CSS class name. */
-const themeClass: Record<string, string> = { light: 'light-slide', statement: 'statement-slide', title: 'title-slide' }
+/** Maps the `theme` prop value to its corresponding CSS class name. */
+const themeClass: Record<string, string> = { light: 'light-slide' }
+/** Maps the `layout` prop value to its corresponding CSS class name. */
+const layoutClass: Record<string, string> = { title: 'title-slide', statement: 'statement-slide' }
 
-export default function Slide({ children, theme, id, title, tab, space, fontSize }: SlideProps) {
+export default function Slide({ children, theme, layout, id, title, tab, space, fontSize }: SlideProps) {
   const { tabs, footer } = useDeckContext()
-  const cls = [theme && themeClass[theme], space && `space-${space}`, fontSize && `font-${fontSize}`]
+  const cls = [
+    theme && themeClass[theme],
+    layout && layoutClass[layout],
+    space && `space-${space}`,
+    fontSize && `font-${fontSize}`,
+  ]
     .filter(Boolean)
     .join(' ')
 

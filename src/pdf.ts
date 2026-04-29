@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { build } from './build.ts'
 
-/** Slide page size in inches. Matches the @page rule in src/styles/deck-base.css. */
+/** Slide page size in inches. Matches the @page rule in src/styles/base.css. */
 const PAPER_WIDTH_IN = 11
 const PAPER_HEIGHT_IN = 6.1875
 

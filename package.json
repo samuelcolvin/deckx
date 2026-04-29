@@ -29,7 +29,7 @@
   "main": "./dist/index.js",
   "exports": {
     ".": "./dist/index.js",
-    "./styles": "./src/styles/deck-base.css",
+    "./styles": "./src/styles/base.css",
     "./templates/index.html": "./templates/index.html",
     "./templates/main.tsx": "./templates/main.tsx",
     "./package.json": "./package.json"

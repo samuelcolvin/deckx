@@ -40,7 +40,7 @@
   --slide-width: 279.4mm;
   --slide-height: 157.2mm;
   --slide-padding: 36px 46px;
-  --title-font-size: 1.05rem;
+  --title-font-size: 0.9rem;
 }
 
 /* ========================================
@@ -1092,5 +1092,16 @@ body {
   }
   .topbar-nav {
     padding-right: 20px;
+  }
+
+  /*
+   * Strip box-shadows in print. Chrome's PDF engine renders shadows poorly -
+   * they often print as solid grey rectangles or hard banded edges instead of
+   * a soft falloff. Blocking globally is safer than leaving it to each user.
+   */
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
   }
 }
