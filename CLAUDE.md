@@ -4,35 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working in the 
 
 ## What this is
 
-`deckx` is a CLI + library for building React/MDX slide decks into a single self-contained HTML file (PDF-ready via Chrome headless). It is **the library**, not a deck. Don't add brand-specific content, custom slides, or example brand palettes into the library itself - those belong in user projects or in `examples/`.
+`deckx` builds a slide deck from one markdown file, a folder of HTML component files and a CSS file into a single HTML page. The page renders itself in the browser (markdown, slide navigation, code highlighting) and prints to PDF via Chrome headless. It is **the library**, not a deck. Don't add brand-specific content, custom slides, or example brand palettes into the library itself - those belong in user projects or in `examples/`.
 
 DO NOT use the em dash "—" in source files or docs; always use a plain hyphen "-".
 
 ## Commands
 
-Always use **bun** (never npm/pnpm/yarn) for development of this repo.
+Two toolchains. Use **pnpm** (never npm/yarn/bun) for the TypeScript browser runtime and **uv** for the Python builder. The Python side is a single stdlib-only script; there is no `pyproject.toml` yet, so ruff and pytest run through `uvx` / `uv run --with`.
 
 ```bash
-bun install                  # install dependencies
-bun run build                # bundle CLI + library to dist/ (tsup)
-bun run dev:lib              # tsup watch mode for the library
-bun run typecheck            # tsc --noEmit
-bun run lint                 # biome check
-bun run format               # biome check --fix
+pnpm install                          # install JS dependencies
+pnpm build                            # bundle src/main.ts -> dist/deck.js (esbuild, minified)
+pnpm dev                              # same, in watch mode
+pnpm typecheck                        # tsc --noEmit
+pnpm lint                             # biome check
+pnpm format                           # biome check --fix
+
+uv run build.py html --dir examples/starter   # -> examples/starter/dist/index.html + deck.js
+uv run build.py pdf --dir examples/starter    # html, then Chrome headless -> dist/deck.pdf
+uvx ruff check                        # lint build.py and tests
+uvx ruff format                       # format them
+uv run --with pytest pytest           # run tests/
 ```
+
+`build.py` needs `dist/deck.js` to exist, so run `pnpm build` once after cloning or after changing anything in `src/`.
 
 **After every set of changes, before reporting work as done, run:**
 
 ```bash
-bun run format               # auto-fix formatting + safe lint issues
-bun run typecheck            # verify tsc is clean
+pnpm format
+pnpm typecheck
+uvx ruff format
+uvx ruff check
+uv run --with pytest pytest
 ```
 
-If `format` modifies files, that's fine - those edits are correct. If `typecheck` reports an error, fix it.
+If `format` modifies files, that's fine - those edits are correct. If `typecheck`, `ruff check` or the tests report an error, fix it.
 
 ## Pre-commit hooks
 
-The repo uses `.pre-commit-config.yaml` (format, typecheck, codespell, basic file hygiene). Use [`prek`](https://github.com/j178/prek) - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
+The repo uses `.pre-commit-config.yaml` (biome format, typecheck, ruff, codespell, basic file hygiene). Use [`prek`](https://github.com/j178/prek) - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
 
 ```bash
 prek install                 # install the git hooks (one-time)
@@ -40,56 +51,52 @@ prek run --all-files         # run every hook against the whole repo
 prek run typecheck           # run a single hook by id
 ```
 
-`prek` is a drop-in replacement; the same `.pre-commit-config.yaml` works unchanged. It's faster and avoids the Python virtualenv setup of upstream `pre-commit`.
-
-To smoke-test against the bundled starter example:
-
-```bash
-cd examples/starter
-bun install
-bunx deckx html              # writes ./dist/index.html
-bunx deckx dev               # vite dev server with HMR
-```
-
-`pdftoppm` (poppler) is available for inspecting generated PDFs - render to `./tmp/` (gitignored), max 1800 × 1800 px.
+`pdftoppm` (poppler) is available for inspecting generated PDFs - render to `./tmp/` (gitignored), max 1800 × 1800 px. Headless Chrome with `--dump-dom` or `--screenshot` is the way to check the runtime without a browser session.
 
 ## Architecture
 
-- **`src/cli.ts`** - argv parser, dispatches to `html`, `dev`, `pdf`, or `skill` (a subcommand is required)
-- **`src/build.ts`, `src/dev.ts`** - thin Vite programmatic wrappers
-- **`src/pdf.ts`** - runs `build`, then spawns Chrome headless to print to PDF (prints the command first so users can copy/edit it on failure)
-- **`src/skill.ts`** - reads `skills/deckx/SKILL.md` and writes it to stdout
-- **`src/config.ts`** - loads + validates `deckx.toml` from a user cwd
-- **`src/vite-config.ts`** - constructs the InlineConfig: MDX/React plugins, `vite-plugin-singlefile`, the four user-facing aliases (`deckx`, `deckx-base-styles`, `deckx-user-deck`, `deckx-user-styles`), and a virtual `deckx-user-config` plugin
-- **`src/components/Deck.tsx`** - root presenter component (nav, scaling, counters)
-- **`src/components/Slide.tsx`** - slide wrapper with topbar
-- **`src/components/DeckContext.tsx`** - React context for deck-level config (tabs)
-- **`src/styles/base.css`** - layout, typography, `@page`, transitions, theme variants. Relies on CSS variables that user `styles.css` overrides.
-- **`src/index.ts`** - library entry: re-exports `Slide`, `Deck`, types
-- **`templates/index.html`, `templates/main.tsx`** - Vite root, bootstraps a deck from the four aliased modules
-- **`skills/deckx/SKILL.md`** - the user-facing authoring guide
-- **`examples/starter/`** - smoke-test deck (depends on deckx via `file:../..`)
+Two halves joined by a JSON blob.
 
-## Module aliases (CLI runtime)
+**Browser runtime (`src/`, bundled by esbuild to `dist/deck.js`)**
 
-When the CLI builds a user's deck, Vite is configured with the following aliases. Understanding these is the key to understanding the runtime:
+- **`src/main.ts`** - entry. Reads the blob from `<script type="application/json" id="deck-data">`, injects `base.css`, `hljs.css` and the user's CSS as `<style>` elements, splits and renders the slides, mounts `.deck-presenter > .deck`, then starts navigation. Everything runs synchronously so the DOM is complete before `load` (headless Chrome prints at `load`). Never add async work here.
+- **`src/split.ts`** - splits raw markdown into slides on `<slide .../>` lines (fence-aware) and parses the tag's attributes. This is the source of truth for slide syntax; `build.py` mirrors the scan only to fail early.
+- **`src/render.ts`** - markdown-it (default preset, `html: true`) with highlight.js `lib/core` plus a curated language list.
+- **`src/slide.ts`** - builds the `section.slide` DOM (topbar with dots, tabs or title, nav slot; `.slide-content > .slide-body`; footer). Class names must match `base.css`.
+- **`src/components.ts`** - replaces `<component src>` tags from the blob (looping for nesting, unwrapping the `<p>` markdown-it puts around an inline tag) and rewrites `img[src]` to embedded data URIs.
+- **`src/deck.ts`** - navigation: `#N` hash routing (1-indexed), keyboard, wheel, prev/next buttons, tab links, traffic-light home link, viewport scaling via `--slide-scale`, `document.title`, and the `NN/NN` counter injected into every slide's `.topbar-nav`.
+- **`src/types.ts`** - `DeckData` / `DeckConfig`, the JSON contract with `build.py`.
+- **`src/styles/base.css`** - layout, typography, `@page`, transitions, theme variants. Relies on CSS variables that user `styles.css` overrides. `src/hljs.css` maps highlight.js token classes onto those variables.
 
-| Alias                | Resolves to                                        |
-|----------------------|----------------------------------------------------|
-| `deckx`              | `<package>/dist/index.js`                          |
-| `deckx-base-styles`  | `<package>/src/styles/base.css`                    |
-| `deckx-user-deck`    | user's `deck.mdx`                                  |
-| `deckx-user-styles`  | user's `styles.css`                                |
-| `deckx-user-config`  | virtual ES module exposing `{ title, tabs }` (TOML) |
+**Builder (`build.py` + `template.html`)**
 
-`templates/main.tsx` imports all five and assembles the React tree.
+- Loads and validates `deckx.toml` (`tomllib`), reads `deck.md`, collects every `<component src>` file (nesting, cycles, path escapes), inlines every referenced image as a data URI, writes the JSON blob into `template.html` (with `<` escaped as `\u003c`) and copies `dist/deck.js` next to the output. `pdf` and `html-to-pdf` run Chrome headless with the paper size from `base.css`.
+- No third-party Python dependencies. Keep it that way.
 
-## Build pipeline
+**Supporting files**
 
-`bun run build` runs tsup, which bundles `src/cli.ts` and `src/index.ts` to `dist/`. All runtime peers (vite, react, MDX plugins) stay external. CSS in `src/styles/` is shipped as-is via `package.json` `files`. Templates are shipped as-is.
+- `skills/deckx/SKILL.md` - the user-facing authoring guide. Update it whenever slide syntax, config keys or the CSS contract change.
+- `examples/starter/` - smoke-test deck exercising every feature (components, nesting, image, tabs, light slide, code).
+- `tests/test_build.py` - pytest for `build.py`.
 
-The package's `bin` is `dist/cli.js`, so `bunx deckx` resolves to that bundled CLI.
+## The JSON contract
+
+```json
+{
+  "config":     { "title": "...", "theme": "light", "footer": "...", "tabs": [{ "id": "intro", "label": "Intro" }] },
+  "markdown":   "raw deck.md source",
+  "components": { "Hero.html": "<section>...</section>" },
+  "styles":     "raw styles.css",
+  "images":     { "assets/logo.svg": "data:image/svg+xml;base64,..." }
+}
+```
+
+Image keys are `posixpath.normpath` of the path as written; `components.ts` normalises `img[src]` the same way before lookup.
+
+## Slide syntax in one paragraph
+
+A line containing only `<slide .../>` starts a slide; the body runs to the next marker or end of file. Attributes mirror the old `<Slide>` props: `layout` (`title` | `statement`), `theme` (`light`), `tab`, `title`, `space` (`tight` | `wide`), `fontSize` (`large`), `id`. Anything before the first marker is a build error. `<component src="Name.html"></component>` needs its closing tag. See `SKILL.md` for the full reference.
 
 ## Code style
 
-Add concise but thorough JSDoc-style comments on exported functions and components. Comment any line of code that's complex or esoteric; otherwise let well-named identifiers speak.
+Add concise but thorough JSDoc-style comments on exported functions, and docstrings on Python functions. Comment any line of code that's complex or esoteric; otherwise let well-named identifiers speak. TypeScript is formatted by biome (single quotes, no semicolons, 119 columns); Python by ruff (single quotes, 120 columns).

@@ -1,4 +1,5 @@
 node_modules/
+node_modules.bun-old/
 dist/
 .DS_Store
 *.log
@@ -6,3 +7,6 @@ dist/
 tmp/
 /references/
 /examples/**/dist/
+.ruff_cache/
+.pytest_cache/
+__pycache__/

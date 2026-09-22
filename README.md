@@ -1,40 +1,72 @@
 # deckx
 
-Yet another markdown + React deck builder.
+Markdown slide decks that render in the browser and print to PDF.
 
 Why?
 
 * My taste
 * Good support for HTML presentation - keyboard control, slide persistence in URL, jump to slide, title
 * Good support for PDF generation - configure `page` css property properly
+* No JavaScript toolchain needed to build a deck: the runtime is one prebuilt `deck.js`, the builder is one Python script with no dependencies
 
-## Quick start
+## How it works
 
-Skills for authoring decks with an AI agent are available in [`skills/deckx/SKILL.md`](./skills/deckx/SKILL.md), and can be installed into Claude Code, Codex, Cursor, etc. via [skills.sh](https://skills.sh).
-
-Then bootstrap a deck:
-
-```bash
-mkdir my-deck && cd my-deck
-bunx skills add samuelcolvin/deckx
-bun init -y
-bun add @samuelcolvin/deckx
-# author deckx.toml, deck.mdx, styles.css, components/
-bunx deckx html         # → dist/index.html
-bunx deckx dev          # live dev server at http://localhost:5173/
-```
-
-`npx` / `pnpm dlx` work in place of `bunx`. The package is published as [`@samuelcolvin/deckx`](https://www.npmjs.com/package/@samuelcolvin/deckx); the CLI binary is `deckx`, so `bunx deckx ...` works once the package is installed.
-
-## A minimal project
+A deck is a directory:
 
 ```
 my-deck/
-├── deckx.toml          # title, tabs, paths (all optional)
-├── deck.mdx            # the slides
-├── styles.css          # theme tokens
-└── components/         # optional custom React components
-    └── Hello.tsx
+├── deckx.toml          # title, theme, footer, tabs, paths (all optional)
+├── deck.md             # the slides
+├── styles.css          # theme tokens (optional)
+├── components/         # HTML files pulled in with <component src="...">
+│   └── Hero.html
+└── assets/             # images
+```
+
+`build.py` reads those files and writes `dist/index.html`: the markdown source, every referenced component, your CSS and every referenced image (as a data URI) go into the page as one JSON blob, next to `<script src="deck.js">`. When the page loads, `deck.js` splits the markdown into slides, renders it, expands the components, highlights code and wires up navigation. The output opens from `file://` and prints to PDF with Chrome headless.
+
+## Quick start
+
+deckx is not yet packaged, so clone the repo and build the runtime once:
+
+```bash
+git clone https://github.com/samuelcolvin/deckx
+cd deckx
+pnpm install && pnpm build     # -> dist/deck.js
+```
+
+Then build the starter deck:
+
+```bash
+uv run build.py html --dir examples/starter    # -> examples/starter/dist/index.html
+uv run build.py pdf --dir examples/starter     # -> examples/starter/dist/deck.pdf
+```
+
+`uv run` picks up the script's inline metadata (Python 3.11+, no dependencies); `python3 build.py` works too. To build your own deck, point `--dir` at it or run from inside it.
+
+## Authoring
+
+`deck.md`:
+
+```markdown
+<slide layout="title"/>
+
+### Section Label
+
+# My Deck
+
+<slide tab="intro"/>
+
+# Hello, world
+
+- Bullets, tables, code blocks and inline HTML all work
+- A `<slide .../>` line starts each slide; there is no closing tag
+
+<component src="Hero.html"></component>
+
+<slide layout="statement"/>
+
+# One bold statement.
 ```
 
 `deckx.toml`:
@@ -50,28 +82,7 @@ tabs = [
 
 The four built-in themes split on two axes: light vs dark backgrounds, and whether markdown-source decorations (`#` heading prefixes, `**` strong markers, traffic-light dots, mono slide counter, diamond bullets) render on top. Pick `light` or `dark` for a clean baseline; pick a `markdown-*` variant for the opinionated annotated look.
 
-`deck.mdx`:
-
-```mdx
-import { Slide } from "deckx";
-import Hello from "./components/Hello.tsx";
-
-<Slide theme="title">
-
-# Hello, world
-
-</Slide>
-
-<Slide tab="intro">
-
-# Slide two
-
-<Hello />
-
-</Slide>
-```
-
-`styles.css` overrides any of the CSS variables in `deckx`'s base stylesheet:
+`styles.css` overrides any of the CSS variables in the base stylesheet:
 
 ```css
 :root {
@@ -81,35 +92,24 @@ import Hello from "./components/Hello.tsx";
 }
 ```
 
+The full authoring guide - slide attributes, components, images, code blocks, the CSS variable contract and class hooks - lives at [`skills/deckx/SKILL.md`](skills/deckx/SKILL.md). It can be installed into Claude Code, Codex, Cursor, etc. via [skills.sh](https://skills.sh) (`bunx skills add samuelcolvin/deckx`).
+
 ## CLI
 
-- `bunx deckx html [output]` - build to `<output>` (default: `./dist/index.html`).
-- `bunx deckx pdf [output]` - build HTML, then convert to `<output>` via Chrome (default: `./dist/deck.pdf`).
-- `bunx deckx html-to-pdf <input.html> <output.pdf>` - convert an existing HTML file to PDF via Chrome, no rebuild.
-- `bunx deckx dev [dir]` - Vite dev server with HMR. Positional is the build directory (default: cwd).
-- `bunx deckx skill` - print the authoring guide (`SKILL.md`) to stdout.
-- `bunx deckx --help` - CLI help.
-- `bunx deckx --version` - version.
+- `uv run build.py html [output] [--dir DIR]` - build to `<output>` (default: `DIR/dist/index.html`). `deck.js` is copied next to it.
+- `uv run build.py pdf [output] [--dir DIR]` - build HTML, then convert to `<output>` via Chrome (default: `DIR/dist/deck.pdf`).
+- `uv run build.py html-to-pdf <input.html> <output.pdf>` - convert an existing HTML file to PDF, no rebuild.
+- `uv run build.py --help`
 
-All commands accept `--dir <dir>` to point at a build directory other than the current one. Examples:
-
-```bash
-bunx deckx pdf my-deck.pdf                 # build current dir to my-deck.pdf
-bunx deckx html out/index.html             # custom HTML output path
-bunx deckx pdf --dir ./decks/foo           # build ./decks/foo to its default ./decks/foo/dist/deck.pdf
-```
-
-A subcommand is required - running `bunx deckx` with no arguments prints help and exits with status 1.
+A subcommand is required - running with no arguments prints help and exits with status 1.
 
 ## Converting to PDF
 
 ```bash
-bunx deckx pdf
+uv run build.py pdf
 ```
 
-This builds the HTML, prints the exact Chrome command it's about to run, then runs it. The output lands at `./dist/deck.pdf`.
-
-If Chrome isn't found, or the conversion fails, copy the printed command, fix the Chrome path or flags, and run it yourself. The default command looks like:
+This builds the HTML, prints the exact Chrome command it's about to run, then runs it. If Chrome isn't found, or the conversion fails, copy the printed command, fix the Chrome path or flags, and run it yourself. The default command looks like:
 
 ```bash
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
@@ -121,23 +121,15 @@ If Chrome isn't found, or the conversion fails, copy the printed command, fix th
 
 (Use `google-chrome` or `chromium` on Linux - deckx looks for them automatically.)
 
-## Authoring guide
-
-The full authoring guide - including the `<Slide>` prop reference, the CSS variable contract, and tips on translating a brand palette into a `styles.css` - lives at [`skills/deckx/SKILL.md`](skills/deckx/SKILL.md).
-
 ## Developing deckx itself
 
 ```bash
-bun install
-bun run build           # bundle CLI + library to dist/
-bun run typecheck
-bun run lint
+pnpm install
+pnpm build              # bundle src/ -> dist/deck.js
+pnpm typecheck
+pnpm lint
+uvx ruff check
+uv run --with pytest pytest
 ```
 
-To smoke-test against the bundled starter example:
-
-```bash
-cd examples/starter
-bun install
-bunx deckx html         # writes dist/index.html
-```
+`pnpm dev` rebuilds `dist/deck.js` on every change to `src/`; rerun `build.py` to pick it up. Headless Chrome (`--dump-dom`, `--screenshot`) is handy for checking the runtime without a browser session.
