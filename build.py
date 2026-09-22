@@ -1,7 +1,3 @@
-# /// script
-# requires-python = ">=3.11"
-# dependencies = []
-# ///
 """Build a self-contained HTML slide deck from markdown, HTML components and CSS.
 
 A deck directory looks like:
@@ -46,9 +42,9 @@ HERE = Path(__file__).resolve().parent
 TEMPLATE_PATH = HERE / 'template.html'
 DECK_JS_PATH = HERE / 'dist' / 'deck.js'
 
-THEMES = ('light', 'dark', 'markdown-light', 'markdown-dark')
-IMAGE_EXTS = ('.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp')
-FAVICON_EXTS = ('.svg', '.png', '.ico', '.jpg', '.jpeg')
+THEMES = 'light', 'dark', 'markdown-light', 'markdown-dark'
+IMAGE_EXTS = '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'
+FAVICON_EXTS = '.svg', '.png', '.ico', '.jpg', '.jpeg'
 
 # Slide page size in inches, matching the @page rule in src/styles/base.css (16:9).
 PAPER_WIDTH_IN = 11
@@ -251,7 +247,7 @@ def collect_images(texts: list[str], base: Path) -> dict[str, str]:
     """Find relative image references in `texts` and read them as data URIs, keyed by normalised path."""
     images: dict[str, str] = {}
     for text in texts:
-        for regex in (HTML_SRC_RE, MD_IMAGE_RE, CSS_URL_RE):
+        for regex in HTML_SRC_RE, MD_IMAGE_RE, CSS_URL_RE:
             for match in regex.finditer(text):
                 raw = match.group('path')
                 if is_external(raw) or not raw.lower().endswith(IMAGE_EXTS):
@@ -297,10 +293,10 @@ def build_deck_data(cfg: Config) -> dict[str, object]:
 
 def render_page(title: str, favicon: Path | None, data: dict[str, object]) -> str:
     """Fill template.html with the title, favicon link and JSON blob."""
-    # `<` is escaped to `<`, which is still valid JSON. That defeats `</script>` and the
+    # `<` is escaped to the JSON sequence `\u003c`, which is still valid JSON. That defeats `</script>` and the
     # `<!--` sequence, which would otherwise put the HTML tokenizer into a state where the real
     # closing tag is ignored. Component HTML can contain both.
-    blob = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
+    blob = json.dumps(data, ensure_ascii=False, indent=2).replace('<', '\\u003c')
     favicon_tag = ''
     if favicon is not None:
         favicon_tag = f'\n<link rel="icon" href="{data_uri(favicon)}">'
@@ -338,7 +334,6 @@ def find_chrome() -> str | None:
         found = shutil.which(name)
         if found:
             return found
-    return None
 
 
 def html_to_pdf(html_path: Path, pdf_path: Path) -> None:
