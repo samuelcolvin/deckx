@@ -23,7 +23,7 @@ my-deck/
 └── assets/             # images
 ```
 
-`build.py` reads those files and writes `dist/index.html`: the markdown source, every referenced component, your CSS and every referenced image (as a data URI) go into the page as one JSON blob, next to `<script src="deck.js">`. When the page loads, `deck.js` splits the markdown into slides, renders it, expands the components, highlights code and wires up navigation. The output opens from `file://` and prints to PDF with Chrome headless.
+`deckx` reads those files and writes `dist/index.html`: the markdown source, every referenced component, your CSS and every referenced image (as a data URI) go into the page as one JSON blob, next to `<script src="deck.js">`. When the page loads, `deck.js` splits the markdown into slides, renders it, expands the components, highlights code and wires up navigation. The output opens from `file://` and prints to PDF with Chrome headless.
 
 ## Quick start
 
@@ -32,17 +32,22 @@ deckx is not yet packaged, so clone the repo and build the runtime once:
 ```bash
 git clone https://github.com/samuelcolvin/deckx
 cd deckx
-pnpm install && pnpm build     # -> dist/deck.js
+pnpm -C frontend install && pnpm -C frontend build     # -> frontend/dist/deck.js
 ```
 
 Then build the starter deck:
 
 ```bash
-uv run build.py html --dir examples/starter    # -> examples/starter/dist/index.html
-uv run build.py pdf --dir examples/starter     # -> examples/starter/dist/deck.pdf
+uv run deckx html --dir examples/starter    # -> examples/starter/dist/index.html
+uv run deckx pdf --dir examples/starter     # -> examples/starter/dist/deck.pdf
 ```
 
-`uv run` picks up the script's inline metadata (Python 3.11+, no dependencies); `python3 build.py` works too. To build your own deck, point `--dir` at it or run from inside it.
+`uv run` installs the `deckx` package from `backend/` into `.venv` on first use (Python 3.11+, no runtime dependencies). To build your own deck from outside the checkout, point uv at the project and `--dir` at the deck, or run from inside the deck directory:
+
+```bash
+uv run --project path/to/deckx deckx html --dir path/to/my-deck
+cd path/to/my-deck && uv run --project path/to/deckx deckx pdf
+```
 
 ## Authoring
 
@@ -96,17 +101,17 @@ The full authoring guide - slide attributes, components, images, code blocks, th
 
 ## CLI
 
-- `uv run build.py html [output] [--dir DIR]` - build to `<output>` (default: `DIR/dist/index.html`). `deck.js` is copied next to it.
-- `uv run build.py pdf [output] [--dir DIR]` - build HTML, then convert to `<output>` via Chrome (default: `DIR/dist/deck.pdf`).
-- `uv run build.py html-to-pdf <input.html> <output.pdf>` - convert an existing HTML file to PDF, no rebuild.
-- `uv run build.py --help`
+- `uv run deckx html [output] [--dir DIR]` - build to `<output>` (default: `DIR/dist/index.html`). `deck.js` is copied next to it.
+- `uv run deckx pdf [output] [--dir DIR]` - build HTML, then convert to `<output>` via Chrome (default: `DIR/dist/deck.pdf`).
+- `uv run deckx html-to-pdf <input.html> <output.pdf>` - convert an existing HTML file to PDF, no rebuild.
+- `uv run deckx --help`
 
 A subcommand is required - running with no arguments prints help and exits with status 1.
 
 ## Converting to PDF
 
 ```bash
-uv run build.py pdf
+uv run deckx pdf
 ```
 
 This builds the HTML, prints the exact Chrome command it's about to run, then runs it. If Chrome isn't found, or the conversion fails, copy the printed command, fix the Chrome path or flags, and run it yourself. The default command looks like:
@@ -123,13 +128,16 @@ This builds the HTML, prints the exact Chrome command it's about to run, then ru
 
 ## Developing deckx itself
 
+The browser runtime is in `frontend/` (pnpm), the builder in `backend/deckx/` (uv, configured by the root `pyproject.toml`).
+
 ```bash
-pnpm install
-pnpm build              # bundle src/ -> dist/deck.js
-pnpm typecheck
-pnpm lint
-uvx ruff check
-uv run --with pytest pytest
+pnpm -C frontend install
+pnpm -C frontend build              # bundle frontend/src -> frontend/dist/deck.js
+pnpm -C frontend typecheck
+pnpm -C frontend lint
+uv run ruff check
+uv run basedpyright
+uv run pytest
 ```
 
-`pnpm dev` rebuilds `dist/deck.js` on every change to `src/`; rerun `build.py` to pick it up. Headless Chrome (`--dump-dom`, `--screenshot`) is handy for checking the runtime without a browser session.
+`pnpm -C frontend dev` rebuilds `frontend/dist/deck.js` on every change to `frontend/src/`; rerun `deckx` to pick it up. Headless Chrome (`--dump-dom`, `--screenshot`) is handy for checking the runtime without a browser session.

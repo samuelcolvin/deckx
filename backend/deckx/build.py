@@ -10,15 +10,15 @@ A deck directory looks like:
 
 Nothing is rendered here. The markdown source, every referenced component, the user's
 styles and every referenced image (as a data URI) are written into the page as one JSON
-blob, and `deck.js` (the browser runtime, built from src/ with `pnpm build`) renders the
+blob, and `deck.js` (the browser runtime, built from frontend/src with `pnpm build`) renders the
 deck when the page loads. The output is `dist/index.html` plus a copy of `deck.js`, which
 works from `file://` and prints to PDF with Chrome headless.
 
 Usage:
 
-    uv run build.py html [output] [--dir DIR]
-    uv run build.py pdf [output] [--dir DIR]
-    uv run build.py html-to-pdf input.html output.pdf
+    uv run deckx html [output] [--dir DIR]
+    uv run deckx pdf [output] [--dir DIR]
+    uv run deckx html-to-pdf input.html output.pdf
 """
 
 from __future__ import annotations
@@ -37,16 +37,21 @@ import sys
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE_PATH = HERE / 'template.html'
-DECK_JS_PATH = HERE / 'dist' / 'deck.js'
+# The repo checkout: backend/deckx/build.py -> repo root. deck.js is not packaged yet, so it is read from the
+# frontend build output.
+ROOT = HERE.parent.parent
+FRONTEND_DIR = ROOT / 'frontend'
+DECK_JS_PATH = FRONTEND_DIR / 'dist' / 'deck.js'
 
 THEMES = 'light', 'dark', 'markdown-light', 'markdown-dark'
 IMAGE_EXTS = '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'
 FAVICON_EXTS = '.svg', '.png', '.ico', '.jpg', '.jpeg'
 
-# Slide page size in inches, matching the @page rule in src/styles/base.css (16:9).
+# Slide page size in inches, matching the @page rule in frontend/src/styles/base.css (16:9).
 PAPER_WIDTH_IN = 11
 PAPER_HEIGHT_IN = 6.1875
 
@@ -75,7 +80,7 @@ class Config:
     tabs: list[dict[str, str]] = field(default_factory=list)
 
     def to_json(self) -> dict[str, object]:
-        """The `config` field of the JSON blob, matching `DeckConfig` in src/types.ts."""
+        """The `config` field of the JSON blob, matching `DeckConfig` in frontend/src/types.ts."""
         data: dict[str, object] = {'theme': self.theme, 'tabs': self.tabs}
         if self.title is not None:
             data['title'] = self.title
@@ -115,12 +120,18 @@ def load_config(cwd: Path) -> Config:
     if theme not in THEMES:
         raise BuildError(f'deckx.toml: invalid theme {theme!r}. Valid values: {", ".join(THEMES)}')
 
-    tabs = raw.get('tabs', [])
-    if not isinstance(tabs, list):
+    raw_tabs = raw.get('tabs', [])
+    if not isinstance(raw_tabs, list):
         raise BuildError('deckx.toml: `tabs` must be an array of {id, label} tables')
-    for tab in tabs:
-        if not (isinstance(tab, dict) and isinstance(tab.get('id'), str) and isinstance(tab.get('label'), str)):
+    tabs: list[dict[str, str]] = []
+    for tab in raw_tabs:  # pyright: ignore[reportUnknownVariableType]
+        if not isinstance(tab, dict):
             raise BuildError(f'deckx.toml: every `tabs` entry needs string `id` and `label`, got {tab!r}')
+        entry = cast('dict[str, object]', tab)
+        tab_id, label = entry.get('id'), entry.get('label')
+        if not (isinstance(tab_id, str) and isinstance(label, str)):
+            raise BuildError(f'deckx.toml: every `tabs` entry needs string `id` and `label`, got {tab!r}')
+        tabs.append({'id': tab_id, 'label': label})
 
     favicon_path: Path | None = None
     favicon = optional_str('favicon')
@@ -142,7 +153,7 @@ def load_config(cwd: Path) -> Config:
         theme=theme,
         footer=optional_str('footer'),
         favicon_path=favicon_path,
-        tabs=[{'id': t['id'], 'label': t['label']} for t in tabs],
+        tabs=tabs,
     )
 
 
@@ -150,7 +161,7 @@ def load_config(cwd: Path) -> Config:
 # Slide structure
 # ---------------------------------------------------------------------------
 
-# Mirrors SLIDE_RE / FENCE_RE in src/split.ts; the runtime does the real split.
+# Mirrors SLIDE_RE / FENCE_RE in frontend/src/split.ts; the runtime does the real split.
 SLIDE_RE = re.compile(r'^\s*<slide\b[^>]*?\s*/?>\s*$', re.IGNORECASE)
 FENCE_RE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
 SELF_CLOSING_COMPONENT_RE = re.compile(r'<component\b[^>]*/>', re.IGNORECASE)
@@ -276,7 +287,7 @@ def data_uri(path: Path) -> str:
 
 
 def build_deck_data(cfg: Config) -> dict[str, object]:
-    """Assemble the JSON blob the runtime reads; shape matches `DeckData` in src/types.ts."""
+    """Assemble the JSON blob the runtime reads; shape matches `DeckData` in frontend/src/types.ts."""
     markdown = cfg.markdown_path.read_text(encoding='utf-8')
     validate_slides(markdown, cfg.markdown_path)
     components = collect_components(markdown, cfg.components_dir)
@@ -311,7 +322,7 @@ def build_html(cwd: Path, output: Path | None = None, deck_js: Path = DECK_JS_PA
     page = render_page(cfg.title or cfg.markdown_path.stem, cfg.favicon_path, data)
 
     if not deck_js.is_file():
-        raise BuildError(f'{deck_js} is missing: run `pnpm build` in {HERE} to create it')
+        raise BuildError(f'{deck_js} is missing: run `pnpm build` in {FRONTEND_DIR} to create it')
     out = (output or cwd / 'dist' / 'index.html').resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page, encoding='utf-8')

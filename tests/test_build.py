@@ -1,24 +1,17 @@
-"""Tests for build.py. Run with `uv run --with pytest pytest`."""
+"""Tests for `deckx.build`. Run with `uv run pytest`."""
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import re
-import sys
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parent.parent
-spec = importlib.util.spec_from_file_location('build', ROOT / 'build.py')
-assert spec is not None and spec.loader is not None
-build = importlib.util.module_from_spec(spec)
-# Register before exec so dataclasses can resolve the module's annotations.
-sys.modules['build'] = build
-spec.loader.exec_module(build)
+from deckx import build
+from deckx.build import BuildError
 
-BuildError = build.BuildError
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def write(path: Path, text: str) -> Path:
@@ -113,10 +106,17 @@ def test_collect_images_missing_file(tmp_path: Path):
 # --- page ------------------------------------------------------------------
 
 
+def blob_of(page: str) -> str:
+    """The raw text of the JSON blob embedded in a built page."""
+    match = re.search(r'id="deck-data">(.*?)</script>', page, re.DOTALL)
+    assert match is not None
+    return match.group(1)
+
+
 def test_render_page_escapes_script_breakers():
-    data = {'markdown': '</script><!--<script>', 'components': {}}
+    data: dict[str, object] = {'markdown': '</script><!--<script>', 'components': {}}
     page = build.render_page('T & T', None, data)
-    blob = re.search(r'id="deck-data">(.*?)</script>', page, re.DOTALL).group(1)
+    blob = blob_of(page)
     assert '<' not in blob
     assert json.loads(blob) == data
     assert '<title>T &amp; T</title>' in page
@@ -131,7 +131,7 @@ def test_build_starter_example(tmp_path: Path):
     assert out.is_file()
     assert (tmp_path / 'out' / 'deck.js').read_text() == '// stub'
     page = out.read_text(encoding='utf-8')
-    blob = json.loads(re.search(r'id="deck-data">(.*?)</script>', page, re.DOTALL).group(1))
+    blob = json.loads(blob_of(page))
     assert blob['config']['theme'] == 'markdown-dark'
     assert 'Hero.html' in blob['components'] and 'Callout.html' in blob['components']
     assert 'assets/logo.svg' in blob['images']

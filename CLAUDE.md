@@ -10,40 +10,43 @@ DO NOT use the em dash "—" in source files or docs; always use a plain hyphen 
 
 ## Commands
 
-Two toolchains. Use **pnpm** (never npm/yarn/bun) for the TypeScript browser runtime and **uv** for the Python builder. The Python side is a single stdlib-only script; there is no `pyproject.toml` yet, so ruff and pytest run through `uvx` / `uv run --with`.
+Two toolchains. Use **pnpm** (never npm/yarn/bun) for the TypeScript browser runtime in `frontend/` and **uv** for the Python builder in `backend/`. `pyproject.toml` at the repo root defines the `deckx` package (`backend/deckx/`), the `deckx` script, and the ruff / basedpyright / pytest config; the dev dependency group holds those tools. The pnpm commands run from `frontend/` (or `pnpm -C frontend ...` from the root); the uv commands run from anywhere in the repo.
 
 ```bash
-pnpm install                          # install JS dependencies
-pnpm build                            # bundle src/main.ts -> dist/deck.js (esbuild, minified)
-pnpm dev                              # same, in watch mode
-pnpm typecheck                        # tsc --noEmit
-pnpm lint                             # biome check
-pnpm format                           # biome check --fix
+pnpm -C frontend install              # install JS dependencies
+pnpm -C frontend build                # bundle src/main.ts -> frontend/dist/deck.js (esbuild, minified)
+pnpm -C frontend dev                  # same, in watch mode
+pnpm -C frontend typecheck            # tsc --noEmit
+pnpm -C frontend lint                 # biome check
+pnpm -C frontend format               # biome check --fix
 
-uv run build.py html --dir examples/starter   # -> examples/starter/dist/index.html + deck.js
-uv run build.py pdf --dir examples/starter    # html, then Chrome headless -> dist/deck.pdf
-uvx ruff check                        # lint build.py and tests
-uvx ruff format                       # format them
-uv run --with pytest pytest           # run tests/
+uv sync                               # create .venv with the dev tools (uv run does this on demand too)
+uv run deckx html --dir examples/starter   # -> examples/starter/dist/index.html + deck.js
+uv run deckx pdf --dir examples/starter    # html, then Chrome headless -> dist/deck.pdf
+uv run ruff check                     # lint backend/ and tests/
+uv run ruff format                    # format them
+uv run basedpyright                   # strict type check of backend/ and tests/
+uv run pytest                         # run tests/
 ```
 
-`build.py` needs `dist/deck.js` to exist, so run `pnpm build` once after cloning or after changing anything in `src/`.
+`deckx` reads `frontend/dist/deck.js`, so run `pnpm -C frontend build` once after cloning or after changing anything in `frontend/src/`.
 
 **After every set of changes, before reporting work as done, run:**
 
 ```bash
-pnpm format
-pnpm typecheck
-uvx ruff format
-uvx ruff check
-uv run --with pytest pytest
+pnpm -C frontend format
+pnpm -C frontend typecheck
+uv run ruff format
+uv run ruff check
+uv run basedpyright
+uv run pytest
 ```
 
-If `format` modifies files, that's fine - those edits are correct. If `typecheck`, `ruff check` or the tests report an error, fix it.
+If `format` modifies files, that's fine - those edits are correct. If `typecheck`, `ruff check`, `basedpyright` or the tests report an error, fix it.
 
 ## Pre-commit hooks
 
-The repo uses `.pre-commit-config.yaml` (biome format, typecheck, ruff, codespell, basic file hygiene). Use [`prek`](https://github.com/j178/prek) - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
+The repo uses `.pre-commit-config.yaml` (biome format, typecheck, ruff, basedpyright, codespell, basic file hygiene). Use [`prek`](https://github.com/j178/prek) - a fast Rust reimplementation of `pre-commit` - rather than `pre-commit` itself:
 
 ```bash
 prek install                 # install the git hooks (one-time)
@@ -57,7 +60,9 @@ prek run typecheck           # run a single hook by id
 
 Two halves joined by a JSON blob.
 
-**Browser runtime (`src/`, bundled by esbuild to `dist/deck.js`)**
+**Browser runtime (`frontend/src/`, bundled by esbuild to `frontend/dist/deck.js`)**
+
+Paths below are relative to `frontend/`. `package.json`, `tsconfig.json` and `biome.jsonc` live there too.
 
 - **`src/main.ts`** - entry. Reads the blob from `<script type="application/json" id="deck-data">`, injects `base.css`, `hljs.css` and the user's CSS as `<style>` elements, splits and renders the slides, mounts `.deck-presenter > .deck`, then starts navigation. Everything runs synchronously so the DOM is complete before `load` (headless Chrome prints at `load`). Never add async work here.
 - **`src/split.ts`** - splits raw markdown into slides on `<slide .../>` lines (fence-aware) and parses the tag's attributes. This is the source of truth for slide syntax; `build.py` mirrors the scan only to fail early.
@@ -68,16 +73,17 @@ Two halves joined by a JSON blob.
 - **`src/types.ts`** - `DeckData` / `DeckConfig`, the JSON contract with `build.py`.
 - **`src/styles/base.css`** - layout, typography, `@page`, transitions, theme variants. Relies on CSS variables that user `styles.css` overrides. `src/hljs.css` maps highlight.js token classes onto those variables.
 
-**Builder (`build.py` + `template.html`)**
+**Builder (`backend/deckx/build.py` + `backend/deckx/template.html`)**
 
-- Loads and validates `deckx.toml` (`tomllib`), reads `deck.md`, collects every `<component src>` file (nesting, cycles, path escapes), inlines every referenced image as a data URI, writes the JSON blob into `template.html` (with `<` escaped as `\u003c`) and copies `dist/deck.js` next to the output. `pdf` and `html-to-pdf` run Chrome headless with the paper size from `base.css`.
-- No third-party Python dependencies. Keep it that way.
+- `main()` is the `deckx` console script declared in `pyproject.toml`; `uv run deckx ...` is the CLI.
+- Loads and validates `deckx.toml` (`tomllib`), reads `deck.md`, collects every `<component src>` file (nesting, cycles, path escapes), inlines every referenced image as a data URI, writes the JSON blob into `template.html` (with `<` escaped as `\u003c`) and copies `frontend/dist/deck.js` next to the output. `pdf` and `html-to-pdf` run Chrome headless with the paper size from `base.css`.
+- No third-party runtime Python dependencies. Keep it that way. `deck.js` is not shipped inside the package yet; the builder finds it via the repo layout (`backend/deckx/` -> repo root -> `frontend/dist/`).
 
 **Supporting files**
 
 - `skills/deckx/SKILL.md` - the user-facing authoring guide. Update it whenever slide syntax, config keys or the CSS contract change.
 - `examples/starter/` - smoke-test deck exercising every feature (components, nesting, image, tabs, light slide, code).
-- `tests/test_build.py` - pytest for `build.py`.
+- `tests/test_build.py` - pytest for `deckx.build`.
 
 ## The JSON contract
 

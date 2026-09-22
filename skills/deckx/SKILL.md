@@ -13,10 +13,10 @@ deckx is not packaged yet. Clone the repo and build the browser runtime once (th
 
 ```bash
 git clone https://github.com/samuelcolvin/deckx
-cd deckx && pnpm install && pnpm build     # -> dist/deck.js
+cd deckx && pnpm -C frontend install && pnpm -C frontend build     # -> frontend/dist/deck.js
 ```
 
-The builder is `build.py` at the repo root. Below, `DECKX` stands for the path to that checkout.
+The builder is the `deckx` command defined by the checkout's `pyproject.toml`; `uv run --project <checkout> deckx ...` runs it from any directory (uv creates the checkout's `.venv` on first use). Below, `DECKX` stands for the path to that checkout.
 
 ## Project layout
 
@@ -31,11 +31,11 @@ my-deck/
 ```
 
 ```bash
-uv run DECKX/build.py html         # build to ./dist/index.html (+ deck.js beside it)
-uv run DECKX/build.py pdf          # build HTML, then ./dist/deck.pdf via Chrome headless
+uv run --project DECKX deckx html         # build to ./dist/index.html (+ deck.js beside it)
+uv run --project DECKX deckx pdf          # build HTML, then ./dist/deck.pdf via Chrome headless
 ```
 
-`html` and `pdf` accept an optional output-path positional - e.g. `uv run DECKX/build.py pdf my-deck.pdf`. Use `--dir <dir>` to point at a deck directory other than the current one. To convert an existing HTML file to PDF without rebuilding, use `uv run DECKX/build.py html-to-pdf <input.html> <output.pdf>`.
+`html` and `pdf` accept an optional output-path positional - e.g. `uv run --project DECKX deckx pdf my-deck.pdf`. Use `--dir <dir>` to point at a deck directory other than the current one. To convert an existing HTML file to PDF without rebuilding, use `uv run --project DECKX deckx html-to-pdf <input.html> <output.pdf>`.
 
 ## `deckx.toml`
 
@@ -297,7 +297,7 @@ Markdown inside `.slide-body` renders as plain HTML (`h1`-`h4`, `p`, `ul`, `ol`,
 
 ## Building & PDF
 
-`uv run DECKX/build.py pdf` is the easy path: it builds the HTML, prints the exact Chrome command it's about to run, then runs it. Output lands at `./dist/deck.pdf`.
+`uv run --project DECKX deckx pdf` is the easy path: it builds the HTML, prints the exact Chrome command it's about to run, then runs it. Output lands at `./dist/deck.pdf`.
 
 If Chrome / Chromium can't be found, copy the printed command and run it yourself with the right binary path. On Linux deckx auto-detects `google-chrome`, `google-chrome-stable`, `chromium`, or `chromium-browser`.
 
