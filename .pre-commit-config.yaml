@@ -15,18 +15,31 @@ repos:
     hooks:
       - id: codespell
         # Lock files and built artifacts are full of "package-name-shaped" tokens that look like typos.
-        exclude: '(^|/)(bun\.lock|package-lock\.json|dist/|node_modules/)'
+        exclude: '(^|/)(pnpm-lock\.yaml|package-lock\.json|dist/|node_modules/)'
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
 
   - repo: local
     hooks:
       - id: format
         name: Format
-        entry: bun run format
+        entry: pnpm -C frontend run format
         language: system
         pass_filenames: false
       - id: typecheck
         name: Typecheck
-        entry: bun run typecheck
+        entry: pnpm -C frontend run typecheck
         language: system
-        types_or: [ts, tsx]
+        types_or: [ts]
+        pass_filenames: false
+      - id: basedpyright
+        name: basedpyright
+        entry: uv run basedpyright
+        language: system
+        types_or: [python]
         pass_filenames: false

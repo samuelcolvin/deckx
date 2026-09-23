@@ -1,9 +1,0 @@
-{
-  "name": "deckx-starter",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "dependencies": {
-    "@samuelcolvin/deckx": "file:../.."
-  }
-}

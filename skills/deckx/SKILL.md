@@ -1,43 +1,45 @@
 ---
 name: deckx
-description: Create a deck with deckx. Use when the user mentions "deckx", "deck" or "slides", asks to build a slide deck from MDX, asks to convert a brand palette into a deck stylesheet, or asks how to convert a deckx HTML deck into a PDF. Covers project layout, deckx.toml config, deck.mdx authoring, custom React components, the styles.css token contract, and the Chrome headless PDF command.
+description: Create a deck with deckx. Use when the user mentions "deckx", "deck" or "slides", asks to build a slide deck from markdown, asks to convert a brand palette into a deck stylesheet, or asks how to convert a deckx HTML deck into a PDF. Covers project layout, deckx.toml config, deck.md authoring with <slide/> breaks, HTML components, images, code blocks, the styles.css token contract, and the Chrome headless PDF command.
 ---
 
 # deckx
 
-`deckx` builds a single, self-contained HTML slide deck from one MDX file plus a CSS theme and an optional folder of React components. The HTML is print-ready and converts to PDF via Chrome headless.
+`deckx` builds a single HTML slide deck from one markdown file plus a CSS theme, an optional folder of HTML components and any images they reference. The page renders itself in the browser and converts to PDF via Chrome headless. Building a deck needs Python (via `uv`) and nothing else.
 
 ## Installation
 
+deckx is not packaged yet. Clone the repo and build the browser runtime once (this is the only step that needs Node):
+
 ```bash
-bun init -y  # if you don't already have a package.json initialized
-bun add @samuelcolvin/deckx
+git clone https://github.com/samuelcolvin/deckx
+cd deckx && pnpm -C frontend install && pnpm -C frontend build     # -> frontend/dist/deck.js
 ```
 
-The npm package is `@samuelcolvin/deckx`; the installed CLI binary is `deckx`. `npm i` / `pnpm add` work the same way. Inside `deck.mdx` you always import from `"deckx"` (a Vite alias, not the npm name).
+The builder is the `deckx` command defined by the checkout's `pyproject.toml`; `uv run --project <checkout> deckx ...` runs it from any directory (uv creates the checkout's `.venv` on first use). Below, `DECKX` stands for the path to that checkout.
 
 ## Project layout
 
 ```
 my-deck/
 ├── deckx.toml          # config: title, theme, tabs, footer, paths (all optional)
-├── deck.mdx            # the slides
+├── deck.md             # the slides
 ├── styles.css          # CSS variable overrides (optional)
-└── components/         # optional custom React/TSX components
-    └── Hello.tsx
+├── components/         # optional HTML snippets pulled in with <component src="...">
+│   └── Hero.html
+└── assets/             # images referenced from the markdown, components or styles
 ```
 
 ```bash
-bunx deckx dev          # dev server with HMR on http://localhost:5173/
-bunx deckx html         # build to ./dist/index.html
-bunx deckx pdf          # build HTML, then ./dist/deck.pdf via Chrome headless
+uv run --project DECKX deckx html         # build to ./dist/index.html (+ deck.js beside it)
+uv run --project DECKX deckx pdf          # build HTML, then ./dist/deck.pdf via Chrome headless
 ```
 
-`html` and `pdf` accept an optional output-path positional - e.g. `bunx deckx pdf my-deck.pdf` or `bunx deckx html out/slides.html`. Use `--dir <dir>` to point at a build directory other than the current one. To convert an existing HTML file to PDF without rebuilding, use `bunx deckx html-to-pdf <input.html> <output.pdf>`.
+`html` and `pdf` accept an optional output-path positional - e.g. `uv run --project DECKX deckx pdf my-deck.pdf`. Use `--dir <dir>` to point at a deck directory other than the current one. To convert an existing HTML file to PDF without rebuilding, use `uv run --project DECKX deckx html-to-pdf <input.html> <output.pdf>`.
 
 ## `deckx.toml`
 
-All fields are optional - a deck with only `deck.mdx` works.
+All fields are optional - a deck with only `deck.md` works.
 
 ```toml
 title = "My Deck - April 2026"        # browser tab title
@@ -56,28 +58,25 @@ footer = "Confidential - do not share"
 favicon = "assets/favicon.svg"
 
 # Path overrides (defaults shown).
-mdx = "deck.mdx"
+markdown = "deck.md"
 styles = "styles.css"
 components = "components"
 
-# Optional tab nav. When present, <Slide tab="..."> highlights the matching tab.
+# Optional tab nav. When present, <slide tab="..."/> highlights the matching tab.
 tabs = [
   { id = "intro", label = "Intro" },
   { id = "details", label = "Details" },
 ]
 ```
 
-If `tabs` is omitted, the `tab` prop on `<Slide>` is ignored and slides render with a plain title topbar.
+If `tabs` is omitted, the `tab` attribute on `<slide/>` is ignored and slides render with a plain title topbar.
 
-## `deck.mdx`
+## `deck.md`
 
-Standard MDX. Import `Slide` from `"deckx"`, plus any custom components from `./components/`.
+Plain markdown (CommonMark plus GFM tables and strikethrough). A line containing only `<slide .../>` starts a new slide; the slide's body runs to the next such line or the end of the file. There is no closing tag.
 
-```mdx
-import { Slide } from "deckx";
-import Hello from "./components/Hello.tsx";
-
-<Slide layout="title" title="Investor Deck / April 2026">
+```markdown
+<slide layout="title" title="Investor Deck / April 2026"/>
 
 ### Section Label
 
@@ -85,80 +84,89 @@ import Hello from "./components/Hello.tsx";
 
 ## A subtitle
 
-</Slide>
-
-<Slide tab="intro">
+<slide tab="intro"/>
 
 # Hello world
 
 - Bullet one
 - Bullet two
 
-<Hello name="friend" />
+<component src="Hero.html"></component>
 
-</Slide>
-
-<Slide layout="statement">
+<slide layout="statement"/>
 
 # One big idea.
-
-</Slide>
 ```
 
-**Do NOT wrap slides in `<div className="deck">`** - deckx adds it for you.
+Rules:
 
-### `<Slide>` props
+- The `<slide .../>` line must be on its own. Whitespace around it is fine; the trailing `/` is optional.
+- Anything before the first `<slide/>` line is a build error. Put nothing there.
+- Markers inside fenced code blocks are ignored, so you can show the syntax in a code sample.
+- Slides must fit **279.4mm × 157.2mm** (16:9). If overflowing, try `space="tight"` first, then drop content.
+- Use `-` (hyphen-minus), never `—` (em dash).
 
-All props are optional. A bare `<Slide>` renders a regular content slide using the deck theme.
+### `<slide/>` attributes
 
-#### `layout` - structural layout (default `'content'`)
+All attributes are optional. A bare `<slide/>` renders a regular content slide using the deck theme.
+
+#### `layout` - structural layout (default `content`)
 
 Picks how the slide arranges its body. Adds a `.<value>-slide` class to the `.slide` element so you can target each variant from `styles.css`.
 
-- `'content'` (default) - regular slide. Headings, paragraphs, bullets, code, and tables flow top-down inside `.slide-body`. Use for the bulk of your deck.
-- `'title'` - cover / section slide. Bottom-aligns the hero; h1 is 4rem with tight letter-spacing; h2 renders in `--accent`. Pair with a leading `### Section Label` for a mono uppercase eyebrow.
-- `'statement'` - centered one-liner. The body is centered both vertically and horizontally; h1 is 3.4rem; paragraphs cap at 80% width. Use for transitions between sections or "one bold idea" beats.
+- `content` (default) - regular slide. Headings, paragraphs, bullets, code, and tables flow top-down inside `.slide-body`. Use for the bulk of your deck.
+- `title` - cover / section slide. Bottom-aligns the hero; h1 is 4rem with tight letter-spacing; h2 renders in `--accent`. Pair with a leading `### Section Label` for a mono uppercase eyebrow.
+- `statement` - centered one-liner. The body is centered both vertically and horizontally; h1 is 3.4rem; paragraphs cap at 80% width. Use for transitions between sections or "one bold idea" beats.
 
 #### `theme` - color variant (defaults to the deck theme)
 
 Per-slide palette override.
 
-- Omit (or pass `'dark'`) - the slide inherits the deck-level `theme` from `deckx.toml`.
-- `'light'` - forces a single slide onto the light palette (`--bg-light`, `--color-text-light`, `--color-heading-light`) regardless of the deck theme. Useful when one slide needs to break out - e.g. a screenshot of a light-themed UI on an otherwise dark deck. Adds `.light-slide` to the slide.
+- Omit (or pass `dark`) - the slide inherits the deck-level `theme` from `deckx.toml`.
+- `light` - forces a single slide onto the light palette (`--bg-light`, `--color-text-light`, `--color-heading-light`) regardless of the deck theme. Useful when one slide needs to break out - e.g. a screenshot of a light-themed UI on an otherwise dark deck. Adds `.light-slide` to the slide.
 
-There is no inverse override: on a light deck, `theme="dark"` has no effect. If you need a single dark slide on a light deck, target it from CSS with a custom `id` or class.
+There is no inverse override: on a light deck, `theme="dark"` has no effect. If you need a single dark slide on a light deck, target it from CSS with a custom `id`.
 
-#### Other props
+#### Other attributes
 
-- `tab` - string matching an `id` from the `tabs` array in `deckx.toml`. Replaces the plain topbar title with the tab bar, with this slide's tab highlighted. Clicking any tab in any slide jumps to the first slide whose `tab` matches. If `tabs` is not configured, the prop is silently ignored.
+- `tab` - string matching an `id` from the `tabs` array in `deckx.toml`. Replaces the plain topbar title with the tab bar, with this slide's tab highlighted. Clicking any tab in any slide jumps to the first slide whose `tab` matches. If `tabs` is not configured, the attribute is silently ignored.
 - `title` - plain text rendered in the topbar when `tab` is not set. Also drives `document.title`, so the browser tab updates as the active slide changes. Ignored when `tab` is set.
-- `space` - `'tight'` reduces bullet/paragraph spacing (use when a slide is close to overflowing); `'wide'` increases padding and line-height (use for slides with very little text where you want generous breathing room).
-- `fontSize` - `'large'` bumps body text from 1.15rem to 1.35rem, and h1/h2 proportionally. Useful for slides that need to read from the back of a room.
-- `id` - sets the HTML `id` on the underlying `<section>`. Useful for targeting one slide from `styles.css` (`.slide#hero { ... }`) without adding a custom class.
+- `space` - `tight` reduces bullet/paragraph spacing (use when a slide is close to overflowing); `wide` increases padding and line-height (use for slides with very little text where you want generous breathing room).
+- `fontSize` - `large` bumps body text from 1.15rem to 1.35rem, and h1/h2 proportionally. Useful for slides that need to read from the back of a room.
+- `id` - sets the HTML `id` on the underlying `<section>`. Useful for targeting one slide from `styles.css` (`.slide#hero { ... }`).
 
-### MDX gotchas
+### Inline HTML and components
 
-- Use `-` (hyphen-minus), never `—` (em dash).
-- Keep blank lines around block elements inside a slide, but **not** between the last block and the closing `</Slide>` - MDX misparses a trailing blank.
-- `### Section Label` at the top of a slide renders as a diamond + uppercase mono label.
-- Slides must fit **279.4mm × 157.2mm** (16:9). If overflowing, try `space="tight"` first, then drop content.
+Short HTML can sit directly in the markdown - a `<mark>`, a small `<div class="note">`, an `<img>`. Anything longer belongs in a file under `components/` and is pulled in with a component tag:
+
+```markdown
+<component src="Hero.html"></component>
+```
+
+- The closing `</component>` is required. The self-closing form is not real HTML (the parser would swallow everything after it) and the build rejects it.
+- Put the tag on its own line with blank lines around it.
+- `src` is relative to the `components` directory and may not escape it.
+- Components are plain HTML files. They may contain other `<component>` tags (nesting is resolved at load time; cycles fail the build) and may reference images the same way the markdown does.
+- Components take no parameters. Two cards with different text are two files.
+- Scripts inside components do not run. Components see the same CSS variables your `styles.css` defines, so read from variables (`color: var(--accent)`) rather than hard-coding colors.
 
 ### Images
 
-Place images in your project (e.g. `assets/`) and import as ES modules:
+Reference images by path relative to the deck directory, from markdown, from a component, or from `url(...)` in `styles.css`:
 
-```mdx
-import logo from "./assets/logo.png";
-<img src={logo} alt="Logo" />
+```markdown
+![Architecture](assets/architecture.png)
+
+<img src="assets/logo.svg" alt="Logo" style="width: 96px">
 ```
 
-Vite inlines them into the final HTML. The markdown `![alt](path)` syntax does **not** get inlined - always use `<img src={imported} />`.
+The build reads each referenced `.png` / `.jpg` / `.gif` / `.svg` / `.webp` and embeds it as a data URI, so the output is self-contained and works from `file://`. A missing file fails the build. Absolute URLs (`https://...`) are left alone and will need network access to display.
 
 ### Code blocks
 
-Fenced code blocks are syntax-highlighted at build time by [Shiki](https://shiki.style). Tag the fence with a language so tokens get coloured:
+Fenced code blocks are syntax-highlighted in the browser by [highlight.js](https://highlightjs.org). Tag the fence with a language so tokens get coloured:
 
-````mdx
+````markdown
 ```ts
 export function greet(name: string): string {
   return `hello, ${name}`;
@@ -166,34 +174,9 @@ export function greet(name: string): string {
 ```
 ````
 
-All Shiki bundled languages work without any per-deck configuration. Highlighting happens during the build, so the output HTML carries only inline-styled `<span>`s - no grammar files, no runtime highlighter.
+Bundled grammars: `typescript` (`ts`, `tsx`), `javascript` (`js`, `jsx`), `python` (`py`), `bash` (`sh`, `zsh`), `json`, `toml` / `ini`, `css`, `xml` / `html` / `svg`, `sql`, `rust` (`rs`), `go`, `yaml` (`yml`), `markdown` (`md`), `diff`. Other languages render as plain, unhighlighted code.
 
-Both a light and a dark theme are emitted into every code block. deckx switches between them automatically based on the slide's effective theme: dark deck themes (`dark`, `markdown-dark`) use the dark code theme, and `<Slide theme="light">` always shows the light code theme even inside a dark deck. Pick the two themes in `deckx.toml`:
-
-```toml
-code_light_theme = "github-light"   # default
-code_dark_theme  = "github-dark"    # default
-```
-
-Browse the available themes at <https://shiki.style/themes>.
-
-## Custom components
-
-Any `.tsx` file in `components/` (or wherever `deckx.toml` `components` points) can be imported into `deck.mdx` with a relative path:
-
-```tsx
-// components/Hello.tsx
-export default function Hello({ name }: { name: string }) {
-  return <p>Hello, {name}!</p>;
-}
-```
-
-```mdx
-import Hello from "./components/Hello.tsx";
-<Hello name="world" />
-```
-
-React 19 is available. Components see the same CSS variables your `styles.css` defines, so to stay on-brand, read from variables (`color: var(--accent)`) rather than hard-coding colors.
+Token colours derive from the deck's accent variables (`--accent`, `--accent-secondary`, `--accent-tertiary`, `--accent-aqua`, `--color-muted`) and are deepened automatically on light slides, so a brand palette in `styles.css` restyles code too. To tune them directly, override `--code-keyword`, `--code-string`, `--code-number`, `--code-title`, `--code-attr`, `--code-comment` or `--code-meta` on `.slide`.
 
 ## Authoring `styles.css`
 
@@ -205,7 +188,7 @@ Backgrounds:
 
 - `--bg-deck` (default `#0d0d0d`) - background outside the slide, presenter mode only.
 - `--bg-slide` (default `#1a1a1a`) - default slide background.
-- `--bg-light` (default `#ffffff`) - slide bg for `light` / `markdown-light` decks and `<Slide theme="light">`.
+- `--bg-light` (default `#ffffff`) - slide bg for `light` / `markdown-light` decks and `<slide theme="light"/>`.
 - `--surface` (default `#2a2a2a`) - inline code background, table headers.
 
 Text:
@@ -241,10 +224,10 @@ Slide structure:
 - `.slide` - a single slide (`<section>`). Sized 16:9, holds topbar + content + optional footer.
 - `.slide-topbar` - 48px window-chrome bar at the top of every slide.
 - `.slide-content` - padded body wrapper below the topbar (this is what `--slide-padding` applies to).
-- `.slide-body` - inner MDX content container, descendant of `.slide-content`.
+- `.slide-body` - inner markdown content container, descendant of `.slide-content`.
 - `.slide-footer` - bottom-right footer text, rendered when `footer` is set in `deckx.toml`.
 
-Slide modifiers (added to `.slide` based on props):
+Slide modifiers (added to `.slide` based on attributes):
 
 - `.title-slide` - `layout="title"`, bottom-aligned hero.
 - `.statement-slide` - `layout="statement"`, centered hero.
@@ -256,9 +239,9 @@ Topbar - left (traffic lights + title/tabs):
 
 - `.topbar-dots` - the traffic-light anchor (clicking jumps to slide 1). Only visible under `markdown-*` themes.
 - `.topbar-dot` plus `.topbar-dot--red` / `.topbar-dot--yellow` / `.topbar-dot--green` - individual dots.
-- `.topbar-title` - plain title text, shown when `<Slide title="...">` is set without a `tab`.
+- `.topbar-title` - plain title text, shown when `<slide title="..."/>` is set without a `tab`.
 
-Topbar - tabs (rendered when `<Slide tab="...">` is set and `tabs` are configured in `deckx.toml`):
+Topbar - tabs (rendered when `<slide tab="..."/>` is set and `tabs` are configured in `deckx.toml`):
 
 - `.topbar-tabs` - the tab bar container.
 - `.topbar-tab-group` - per-tab wrapper containing the link plus its leading separator.
@@ -276,7 +259,7 @@ Deck-level theme classes (applied to both `<html>` and `.deck-presenter` based o
 
 - `.theme-light` / `.theme-dark` / `.theme-markdown-light` / `.theme-markdown-dark`
 
-MDX content inside `.slide-body` renders as plain HTML (`h1`-`h4`, `p`, `ul`, `ol`, `pre`, `code`, `table`, `blockquote`, `a`, `img`, `hr`) - target those tags directly with `.slide <tag>` selectors rather than expecting deckx to add wrapper classes.
+Markdown inside `.slide-body` renders as plain HTML (`h1`-`h4`, `p`, `ul`, `ol`, `pre`, `code`, `table`, `blockquote`, `a`, `img`, `hr`) - target those tags directly with `.slide <tag>` selectors rather than expecting deckx to add wrapper classes.
 
 ### Mapping a brand palette
 
@@ -284,7 +267,7 @@ MDX content inside `.slide-body` renders as plain HTML (`h1`-`h4`, `p`, `ul`, `o
 2. Pick a slightly off-white for `--color-heading` (pure white reads sterile under projector light).
 3. Pick a tinted dark for `--bg-slide` (pure black is harsh).
 4. For light slides, pick a tinted light bg (cream, eggshell, lavender - not pure white) plus a near-black text color → `--bg-light` / `--color-heading-light` / `--color-text-light`.
-5. For custom fonts, self-host woff2 files in `assets/` and declare them with `@font-face` in `styles.css`, then point `--font-body` / `--font-mono` at the family. Do **not** use `@import url(...)` from Google Fonts - CSS spec requires @import to come before all other statements, which Vite's CSS bundling routinely violates when concatenating the base stylesheet with yours. `@font-face` can appear anywhere. Use [Google Webfonts Helper](https://gwfh.mranftl.com/fonts) to download woff2 files; Vite inlines them into the deck, keeping it self-contained for offline / PDF export.
+5. For custom fonts, self-host woff2 files in `assets/` and declare them with `@font-face` in `styles.css`, then point `--font-body` / `--font-mono` at the family. Font files are not inlined by the build, so keep them next to the output or use `url(data:...)` yourself if the deck must be a single file. Use [Google Webfonts Helper](https://gwfh.mranftl.com/fonts) to download woff2 files.
 
 ```css
 @font-face {
@@ -314,7 +297,7 @@ MDX content inside `.slide-body` renders as plain HTML (`h1`-`h4`, `p`, `ul`, `o
 
 ## Building & PDF
 
-`bunx deckx pdf` is the easy path: it builds the HTML, prints the exact Chrome command it's about to run, then runs it. Output lands at `./dist/deck.pdf`.
+`uv run --project DECKX deckx pdf` is the easy path: it builds the HTML, prints the exact Chrome command it's about to run, then runs it. Output lands at `./dist/deck.pdf`.
 
 If Chrome / Chromium can't be found, copy the printed command and run it yourself with the right binary path. On Linux deckx auto-detects `google-chrome`, `google-chrome-stable`, `chromium`, or `chromium-browser`.
 

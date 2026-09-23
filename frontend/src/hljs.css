@@ -1,0 +1,89 @@
+/*
+ * highlight.js token colours for deckx.
+ *
+ * No highlight.js theme file is shipped: base.css already paints the <pre> background and
+ * base text colour per theme (`.slide pre:not(.shiki)`), so only the token colours are
+ * needed. They derive from the deck's brand variables, so a user's styles.css retunes them
+ * for free. Light contexts (light deck themes and per-slide `.light-slide`) deepen the
+ * accents with color-mix so they keep contrast on a pale background.
+ */
+
+.slide {
+  --code-comment: var(--color-muted);
+  --code-keyword: var(--accent-tertiary);
+  --code-string: var(--accent-aqua);
+  --code-number: var(--accent-secondary);
+  --code-title: var(--accent);
+  --code-attr: var(--accent);
+  --code-meta: var(--color-muted);
+}
+
+:is(.theme-light, .theme-markdown-light) .slide,
+.slide.light-slide {
+  --code-comment: color-mix(in srgb, var(--color-muted) 85%, black);
+  --code-keyword: color-mix(in srgb, var(--accent-tertiary) 70%, black);
+  --code-string: color-mix(in srgb, var(--accent-aqua) 60%, black);
+  --code-number: color-mix(in srgb, var(--accent-secondary) 80%, black);
+  --code-title: color-mix(in srgb, var(--accent) 75%, black);
+  --code-attr: color-mix(in srgb, var(--accent) 75%, black);
+  --code-meta: color-mix(in srgb, var(--color-muted) 85%, black);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-type,
+.hljs-literal {
+  color: var(--code-keyword);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--code-string);
+}
+
+.hljs-number,
+.hljs-deletion {
+  color: var(--code-number);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--code-title);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-property {
+  color: var(--code-attr);
+}
+
+.hljs-meta,
+.hljs-doctag,
+.hljs-tag {
+  color: var(--code-meta);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
