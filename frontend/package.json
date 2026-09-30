@@ -1,0 +1,32 @@
+{
+  "name": "deckx",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Markdown slide decks rendered in the browser, with a print stylesheet that makes PDF export work.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Samuel Colvin <s@muelcolvin.com>",
+  "homepage": "https://github.com/samuelcolvin/deckx#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samuelcolvin/deckx.git"
+  },
+  "packageManager": "pnpm@10.22.0",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --format=iife --target=es2022 --loader:.css=text --minify --outfile=dist/deck.js",
+    "dev": "esbuild src/main.ts --bundle --format=iife --target=es2022 --loader:.css=text --outfile=dist/deck.js --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --fix ."
+  },
+  "dependencies": {
+    "highlight.js": "^11.12.0",
+    "markdown-it": "^15.0.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/markdown-it": "^14.2.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

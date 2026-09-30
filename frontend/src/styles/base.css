@@ -430,6 +430,73 @@ body {
 }
 
 /* ========================================
+   LAYOUT HELPERS
+   Opt-in classes for the raw HTML wrappers markdown cannot express. Put a blank
+   line between the wrapper tags and the markdown inside them. The grid columns
+   use minmax(0, 1fr) so a wide <pre> cannot push its neighbour off the slide.
+   ======================================== */
+.row {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.row-top {
+  align-items: flex-start;
+}
+
+.col {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.cols-2,
+.cols-3 {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+
+.cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Scale a block that is slightly too big for the slide: <div class="shrink" style="--shrink: 0.85"> */
+.shrink {
+  transform: scale(var(--shrink, 0.9));
+  transform-origin: top center;
+}
+
+.small-code pre {
+  font-size: 0.8rem;
+}
+
+.center {
+  text-align: center;
+}
+
+/* ========================================
+   BUILD STEPS (data-step, see steps.ts)
+   The runtime writes data-step-state; everything visual is decided here and can be
+   overridden from styles.css, e.g. to dim "done" elements instead of hiding them.
+   ======================================== */
+[data-step-state] {
+  transition: opacity 0.25s ease;
+}
+
+[data-step-state='pending'],
+[data-step-state='done'] {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ========================================
    SLIDE BODY
    ======================================== */
 .slide-content {
@@ -1046,6 +1113,19 @@ body {
     background: var(--slide-bg);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  /* Every slide prints at its final build step. */
+  [data-step-state] {
+    opacity: 1;
+    visibility: visible;
+    transition: none;
+  }
+
+  [data-step-print='pending'],
+  [data-step-print='done'] {
+    opacity: 0;
+    visibility: hidden;
   }
 
   .deck-presenter {

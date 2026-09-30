@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 90" style="width: 100%; height: auto;">
+  <g font-family="var(--font-mono)" font-size="12" text-anchor="middle">
+    <rect x="4" y="25" width="90" height="40" rx="8" fill="color-mix(in srgb, var(--accent) 18%, transparent)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="49" y="50" fill="var(--color-heading)">deck.md</text>
+    <path d="M98 45 H130" stroke="var(--accent)" stroke-width="2" marker-end="url(#starter-arrow)"/>
+    <rect x="136" y="25" width="90" height="40" rx="8" fill="color-mix(in srgb, var(--accent-aqua) 18%, transparent)" stroke="var(--accent-aqua)" stroke-width="2"/>
+    <text x="181" y="50" fill="var(--color-heading)">build</text>
+    <path d="M230 45 H262" stroke="var(--accent)" stroke-width="2" marker-end="url(#starter-arrow)"/>
+    <rect x="268" y="25" width="48" height="40" rx="8" fill="color-mix(in srgb, var(--accent-secondary) 18%, transparent)" stroke="var(--accent-secondary)" stroke-width="2"/>
+    <text x="292" y="50" fill="var(--color-heading)">pdf</text>
+  </g>
+  <defs>
+    <marker id="starter-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+</svg>

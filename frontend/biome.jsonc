@@ -1,7 +1,10 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignoreUnknown": false },
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true, "root": ".." },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["**"]
+  },
   "formatter": {
     "formatWithErrors": true,
     "enabled": true,
@@ -11,7 +14,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "suspicious": {
         "noArrayIndexKey": "off"
       },
@@ -31,7 +34,7 @@
         "useTemplate": "off",
         "noRestrictedImports": "error"
       },
-      "nursery": { "recommended": true }
+      "nursery": { "preset": "none" }
     }
   },
   "css": { "formatter": { "quoteStyle": "single" } },
@@ -48,7 +51,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/styles/base.css"],
+      "includes": ["src/styles/base.css", "src/hljs.css"],
       "linter": {
         "rules": {
           "suspicious": {
